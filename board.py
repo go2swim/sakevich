@@ -249,16 +249,3 @@ class Board:
             letter_text_rect = letter_text.get_rect()
             letter_text_rect.center = board_rect.right + TILE_LENGTH / 4, board_rect.top + TILE_LENGTH * (i + 0.5)
             window.blit(letter_text, letter_text_rect)
-
-        # # Отрисовка лога
-        # log_rect = pygame.Rect(SCREEN_WIDTH, 0, LOG_WIDTH, SCREEN_HEIGHT)
-        # pygame.draw.rect(window, BLACK, log_rect)
-        #
-        # # Шрифт для лога
-        # log_font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
-        #
-        # # Пример вывода лога (замените self.move_log на вашу структуру данных для хранения ходов)
-        # if hasattr(self, 'move_log'):
-        #     for i, move in enumerate(self.move_log):
-        #         log_text = log_font.render(move, True, WHITE)
-        #         window.blit(log_text, (SCREEN_WIDTH + 10, 10 + i * 30))
