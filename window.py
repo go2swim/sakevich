@@ -6,6 +6,7 @@ import pygame
 import tkinter as tk
 import queue
 
+import utils
 from client import Client
 from piece import get_piece
 from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK, RED
@@ -180,8 +181,9 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
-                row = int((y - (SCREEN_HEIGHT - BOARD_LENGTH) / 2) // TILE_LENGTH)
-                col = int((x - (SCREEN_WIDTH - BOARD_LENGTH) / 2) // TILE_LENGTH)
+
+                #переходим в систему координат доски
+                col, row = utils.coordinate_builder_to_tile_coord(x, y)
 
                 if not 0 <= row <= 7 or not 0 <= col <= 7:
                     continue

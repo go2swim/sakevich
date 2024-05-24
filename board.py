@@ -5,13 +5,13 @@ from copy import deepcopy
 
 import pygame
 
-from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE
+from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE, BOARD_OFFSET, TILE_LENGTH
 from piece import King, Queen, Rook, Bishop, Knight, Pawn
 
 board_surface = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "chess_board.png")),
                                        (BOARD_LENGTH, BOARD_LENGTH * 1.01538))
 
-
+CONST1 = 1.5
 class Board:
     def __init__(self, wp_name: str = None, bp_name: str = None) -> None:
         self.wp_name = wp_name  # имя пользователя играющего за белые
@@ -175,28 +175,30 @@ class Board:
         self.is_check = True in check
 
     def draw(self, window: pygame.Surface, p_name: str = None) -> None:
-        # чёрная заливка фона
-        pygame.draw.rect(window, BLACK, (0, 0, (SCREEN_WIDTH - BOARD_LENGTH) / 2, SCREEN_HEIGHT))
+        # чёрная заливка фона, теперь используем NEW_SCREEN_WIDTH
+        pygame.draw.rect(window, BLACK, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
 
-        # размещаем саму картинку доски указывая центр по середине экрана
+        # размещаем саму картинку доски, указывая центр по середине экрана
         board_rect = board_surface.get_rect()
-        board_rect.left = (SCREEN_WIDTH - BOARD_LENGTH) / 2
-        board_rect.top = (SCREEN_HEIGHT - BOARD_LENGTH) / 2
+        board_rect.left = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET
+        board_rect.top = (SCREEN_HEIGHT - BOARD_LENGTH) // 2
         window.blit(board_surface, board_rect)  # натягивает изображение на наш прямоугольник
 
         # инициализируем шрифт
-        font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 15)
+        font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
 
         # создаём текст и красим его в зелёный в соответствии какой игрок ходит
         text_bp = font.render(self.bp_name, True, GREEN if self.turn == self.bp_name else WHITE)
         text_wp = font.render(self.wp_name, True, GREEN if self.turn == self.wp_name else WHITE)
-        text_bp_rect = text_bp.get_rect()
+
         # координаты для текста
-        text_bp_rect.centerx = SCREEN_WIDTH / 2
-        text_bp_rect.centery = (SCREEN_HEIGHT - BOARD_LENGTH) / 4
+        text_bp_rect = text_bp.get_rect()
+        text_bp_rect.centerx = board_rect.centerx
+        text_bp_rect.centery = board_rect.top - (SCREEN_HEIGHT - BOARD_LENGTH) // 4
         text_wp_rect = text_wp.get_rect()
-        text_wp_rect.centerx = SCREEN_WIDTH / 2
-        text_wp_rect.centery = SCREEN_HEIGHT - (SCREEN_HEIGHT - BOARD_LENGTH) / 4
+        text_wp_rect.centerx = board_rect.centerx
+        text_wp_rect.centery = board_rect.bottom + (SCREEN_HEIGHT - BOARD_LENGTH) // 3
+
         # отрисовка прямоугольников с текстом
         window.blit(text_bp, text_bp_rect)
         window.blit(text_wp, text_wp_rect)
@@ -206,7 +208,7 @@ class Board:
             text_you = font.render(f"You: {p_name}", True, WHITE)
             text_you = pygame.transform.rotate(text_you, -90)
             text_you_rect = text_you.get_rect()
-            text_you_rect.center = SCREEN_WIDTH - (SCREEN_WIDTH - BOARD_LENGTH) / 4, SCREEN_HEIGHT / 2
+            text_you_rect.center = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET / 2, SCREEN_HEIGHT // 2
             window.blit(text_you, text_you_rect)
 
         # отображается текст Check при шахе
@@ -214,8 +216,8 @@ class Board:
             text = font.render("Check", True, RED)
             text = pygame.transform.rotate(text, 90)
             text_rect = text.get_rect()
-            text_rect.centerx = (SCREEN_WIDTH - BOARD_LENGTH) / 4
-            text_rect.centery = SCREEN_HEIGHT / 2
+            text_rect.centerx = (SCREEN_WIDTH - BOARD_LENGTH) // 8
+            text_rect.centery = SCREEN_HEIGHT // 2
             window.blit(text, text_rect)
 
         # отрисовка фигур
@@ -224,10 +226,39 @@ class Board:
                 if piece is not None:
                     piece.draw(window)
 
-        # Отображение надписи если кто то победил
+        # Отображение надписи если кто-то победил
         if self.winner is not None:
             font = pygame.font.SysFont(FONT, SCREEN_HEIGHT // 7)
             text = font.render(f"{self.winner} WON", True, GREEN)
             text_rect = text.get_rect()
-            text_rect.center = SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2
+            text_rect.center = board_rect.center
             window.blit(text, text_rect)
+
+        # Добавление нумерации клеток снизу
+        numbering_font = pygame.font.SysFont(FONT, int(TILE_LENGTH // 3)) #отдельный шрифт для подписей клеток
+        for i in range(8):
+            num_text = numbering_font.render(str(i + 1), True, WHITE)
+            num_text_rect = num_text.get_rect()
+            num_text_rect.center = board_rect.left + TILE_LENGTH * (i + 0.5), board_rect.bottom + TILE_LENGTH / 4
+            window.blit(num_text, num_text_rect)
+
+        # Добавление буквенных обозначений справа
+        letters = 'ABCDEFGH'
+        for i in range(8):
+            letter_text = numbering_font.render(letters[i], True, WHITE)
+            letter_text_rect = letter_text.get_rect()
+            letter_text_rect.center = board_rect.right + TILE_LENGTH / 4, board_rect.top + TILE_LENGTH * (i + 0.5)
+            window.blit(letter_text, letter_text_rect)
+
+        # # Отрисовка лога
+        # log_rect = pygame.Rect(SCREEN_WIDTH, 0, LOG_WIDTH, SCREEN_HEIGHT)
+        # pygame.draw.rect(window, BLACK, log_rect)
+        #
+        # # Шрифт для лога
+        # log_font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
+        #
+        # # Пример вывода лога (замените self.move_log на вашу структуру данных для хранения ходов)
+        # if hasattr(self, 'move_log'):
+        #     for i, move in enumerate(self.move_log):
+        #         log_text = log_font.render(move, True, WHITE)
+        #         window.blit(log_text, (SCREEN_WIDTH + 10, 10 + i * 30))

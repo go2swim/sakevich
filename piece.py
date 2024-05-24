@@ -5,7 +5,7 @@ import tkinter as tk
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
-from utils import coordinate_builder
+from utils import coordinate_builder_to_absolute_coord
 from client import Client
 
 king_img_w = pygame.transform.scale(
@@ -266,7 +266,7 @@ class Piece:
 
     def draw(self, window: pygame.Surface) -> tuple[int]:
         # координаты левого верхнего угла
-        x, y = coordinate_builder(self.row, self.col)
+        x, y = coordinate_builder_to_absolute_coord(self.row, self.col)
 
         # если фигура выбрана то отрисовываем по особому
         if not self.is_selected:
@@ -277,7 +277,7 @@ class Piece:
             # отрисовываем все возможные ходы если фигура выбрана
             for row, col in self.valid_moves:
                 # строим прямоугольник соответствующий клеточке и в центре рисуем круг
-                dotx, doty = coordinate_builder(row, col)
+                dotx, doty = coordinate_builder_to_absolute_coord(row, col)
 
                 dot_rect = valid_move_dot.get_rect()
                 dot_rect.left = dotx
