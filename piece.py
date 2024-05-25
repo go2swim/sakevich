@@ -246,7 +246,7 @@ class Piece:
 
         # перемещаем фигуру на новые координаты (все проверки координат выполняются в board)
         board[row][col] = board[self.row][self.col]
-        board[self.row][self.col] = None  # убираем фигуру сос тарого места
+        board[self.row][self.col] = None  # убираем фигуру со старого места
 
         self.row = row
         self.col = col
@@ -268,7 +268,7 @@ class Piece:
         # координаты левого верхнего угла
         x, y = coordinate_builder_to_absolute_coord(self.row, self.col)
 
-        # если фигура выбрана то отрисовываем по особому
+        # если фигура выбрана, то отрисовываем по особому
         if not self.is_selected:
             img = images.get(self.img_name)
         else:
@@ -297,18 +297,18 @@ class King(Piece):
     def __init__(self, row: int, col: int, color: str, piece_name: str) -> None:
         super().__init__(row, col, color, piece_name)
 
-        # клетки для ракеровки
+        # клетки для рокировки
         self.rochade = set()
 
     def move(self, row: int, col: int, board: list[list[Piece, None]], window: pygame.Surface = None,
              replacement: str = None) -> bool:
-        # проверка на ракеровку
+        # проверка на рокировку
         if (row, col) in self.rochade:
             if col < self.col:
-                # длинная ракеровка, вызываем у ладьи метод перестановки
+                # длинная рокировка, вызываем у ладьи метод перестановки
                 board[self.row][0].move(self.row, self.col - 1, board, window, replacement)
             if col > self.col:
-                # короткая ракеровка
+                # короткая рокировка
                 board[self.row][7].move(self.row, self.col + 1, board, window, replacement)
 
         # передвигаем как обычную фигуру
@@ -331,7 +331,7 @@ class King(Piece):
                             check = True
 
         # check for rochade
-        # проверяем клетки для ракеровки (должны быть пусты)), проверяем не ходил ли король и проверям наличие ладьи
+        # проверяем клетки для рокировки (должны быть пусты), проверяем не ходил ли король и проверяем наличие ладьи
         if self.first_move and board[self.row][0] is not None and board[self.row][0].first_move:
             if board[self.row][self.col - 3] is None and board[self.row][self.col - 2] is None and board[self.row][
                 self.col - 1] is None:
