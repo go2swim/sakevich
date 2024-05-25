@@ -37,7 +37,7 @@ class Client:
                             print("tup1")
                             command = key_event_queue.get()
                             if command == "tup_space":
-                                # Отсылаем на сервер что бот добавлен
+                                # Отсылаем на сервер, что бот добавлен
                                 self.send(b'add_bot', dump_pickle=False)
 
                     if len(data) > 1 and data[1].startswith("GET:"):

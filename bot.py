@@ -1,3 +1,6 @@
+import collections
+import dataclasses
+import random
 import time
 
 from client import Client
@@ -7,7 +10,14 @@ import pygame
 import threading
 import time
 
+from sakevich.piece import Piece
 
+
+@dataclasses.dataclass
+class Move:
+    piece: Piece
+    current_position: tuple[int, int]
+    new_position: tuple[int, int]
 
 
 class Bot(Client):
@@ -34,8 +44,8 @@ class Bot(Client):
         print("Сделай меня, Артём")
         while(True):
             self.receive(4096)
-            move = self.find_move()
-            print(move)
+            self.board.update_valid_moves()
+            move = self.make_random_move()
             self.send({
                 "command": "move",
                 "p_name": self.name,
@@ -45,16 +55,32 @@ class Bot(Client):
             })
 
 
-    def find_move(self):
-        for row in range(len(self.board.board)):
-            for piece in self.board.board[row]:
-                if piece is not None:
-                    if piece.valid_moves:
+    def make_random_move(self) -> list[tuple[int, int], tuple[int, int]]:
+        """Делает рандомный ход в случае, если не нашлось фигуры соперника, которую можно съесть"""
+        rows = [i for i in range(len(self.board.board))]
+        cols = [j for j in range(len(self.board.board[0]))]
+        random.shuffle(rows)
+        random.shuffle(cols)
+        for row in rows:
+            for col in cols:
+                piece = self.board.board[row][col]
+                if piece:
+                    if piece.color == 'b' and piece.valid_moves:
                         for move in piece.valid_moves:
-                            old_location = (piece.row, piece.col)
                             piece.move(move[0], move[1], self.board.board)
                             self.board.update_valid_moves()
-                            return [old_location, move]
+                            print("moved!", f'{(row, col)} -> {move}', '\n')
+                            return [(row, col), move]
+
+
+
+
+
+
+
+
+
+
 
 
 
