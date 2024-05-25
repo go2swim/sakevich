@@ -59,20 +59,32 @@ def draw_waiting(window: pygame.Surface, remaining_time: float) -> None:
     font = pygame.font.SysFont(FONT, SCREEN_HEIGHT//20)
     text1 = font.render("Waiting for enemy...", True, WHITE)
     text2 = font.render(f"Bot will be added in {int(remaining_time)} seconds...", True, WHITE)
-    text3 = font.render(f"Press the space if you want to add a bot", True, WHITE)
+    text3 = font.render(f"Press :", True, WHITE)
+    text4 = font.render(f"1 - if you want to add a easy bot", True, WHITE)
+    text5 = font.render(f"2 - if you want to add a hard bot", True, WHITE)
+
+    indentation_between_blocks = 60
 
     text_rect1 = text1.get_rect()
-    text_rect1.center = (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 60)
+    text_rect1.center = (SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - indentation_between_blocks * 5)
 
     text_rect2 = text2.get_rect()
-    text_rect2.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+    text_rect2.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - indentation_between_blocks * 2)
 
     text_rect3 = text3.get_rect()
-    text_rect3.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 60)
+    text_rect3.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+
+    text_rect4 = text4.get_rect()
+    text_rect4.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + indentation_between_blocks)
+
+    text_rect5 = text5.get_rect()
+    text_rect5.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + indentation_between_blocks * 2)
 
     window.blit(text1, text_rect1)
     window.blit(text2, text_rect2)
     window.blit(text3, text_rect3)
+    window.blit(text4, text_rect4)
+    window.blit(text5, text_rect5)
 
     pygame.display.update()
 
@@ -102,6 +114,12 @@ def menu_screen(window: pygame.Surface, name: str, connection_lost: bool=False) 
                 if event.key == pygame.K_SPACE:
                     print("tup")
                     key_event_queue.put("tup_space")
+                elif event.key == pygame.K_1:
+                    print("1 pressed")
+                    key_event_queue.put("key_1")
+                elif event.key == pygame.K_2:
+                    print("2 pressed")
+                    key_event_queue.put("key_2")
 
         if client_thread is None:
             if not key_event_queue.empty():

@@ -182,7 +182,7 @@ class Board:
 
                 self.update_valid_moves()  # обновляем списко возможных ходов
                 # Логирование хода
-                # Жалко убирать с красивыми символами(console_log)
+                # Жалко убирать с красивыми символами(console_log) в сраном пайгеме они не отображаются((
                 console_log = f"{piece_unicode[piece_move.piece_name][piece_move.color]}{chr(ay + 97)}{8 - ax + 1}"
                 if piece_move.piece_name == 'pawn':
                     move_log = f'{chr(ay + 97)}{8 - ax + 1}'
@@ -201,7 +201,7 @@ class Board:
                     console_log = f'O-O-O' if ay < by else f'O-O'
                     move_log = 'K O-O-O' if ay < by else f'K O-O'
                 self.log.append(f'{piece_move.color}{move_log}')
-                print(console_log)
+                #print(console_log)
 
                 self.turn = self.bp_name if self.turn == self.wp_name else self.wp_name  # меняем цвет ходящего
                 return True
@@ -221,6 +221,8 @@ class Board:
     def draw(self, window: pygame.Surface, p_name: str = None) -> None:
         # чёрная заливка фона, теперь используем NEW_SCREEN_WIDTH
         pygame.draw.rect(window, BLACK, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+
+        need_rotate = self.turn == self.bp_name
 
         # размещаем саму картинку доски, указывая центр по середине экрана
         board_rect = board_surface.get_rect()

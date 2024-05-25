@@ -34,11 +34,16 @@ class Client:
 
                         # Проверяем очередь сообщений на команду добавления бота
                         if not key_event_queue.empty():
-                            print("tup1")
                             command = key_event_queue.get()
-                            if command == "tup_space":
+                            if command == "key_1":
                                 # Отсылаем на сервер, что бот добавлен
-                                self.send(b'add_bot', dump_pickle=False)
+                                print('send request 1')
+                                self.send(b'add_easy_bot|', dump_pickle=False)
+                            elif command == "key_2":
+                                print('send request 2')
+                                self.send(b'add_hard_bot|', dump_pickle=False)
+                            else:
+                                raise ValueError(f'Incorrect command in queue: {command}')
 
                     if len(data) > 1 and data[1].startswith("GET:"):
                         message = data[1][4:]
