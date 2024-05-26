@@ -1,5 +1,4 @@
 import os
-import queue
 import threading
 import time
 import pygame
@@ -8,9 +7,11 @@ import queue
 import piece
 
 import utils
+from tkinter import messagebox
 from client import Client
 from piece import get_piece
 from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK, RED
+
 
 
 
@@ -308,19 +309,24 @@ def main() -> None:
         name.set(entry.get())
         root.destroy()
 
-    root = tk.Tk()
-    root.title("Enter Name")
+    while True:
+        root = tk.Tk()
+        root.title("Enter Name")
 
-    tk.Label(root, text="Enter your name:").pack(pady=10)
-    entry = tk.Entry(root)
-    entry.pack(pady=10)
+        tk.Label(root, text="Enter your name:").pack(pady=10)
+        entry = tk.Entry(root)
+        entry.pack(pady=10)
 
-    name = tk.StringVar()
-    tk.Button(root, text="Submit", command=submit).pack(pady=10)
-    root.geometry("400x200")
-    root.mainloop()
+        name = tk.StringVar()
+        tk.Button(root, text="Submit", command=submit).pack(pady=10)
+        root.geometry("400x200")
+        root.mainloop()
 
-    inter_name = name.get()
+        inter_name = name.get()
+        if inter_name:
+            break
+        else:
+            messagebox.showwarning("Invalid input", "Name cannot be empty. Please enter a valid name.")
 
 
     #задаём параметры окна
