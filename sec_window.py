@@ -5,6 +5,7 @@ import time
 import pygame
 import tkinter as tk
 import queue
+import piece
 
 import utils
 from client import Client
@@ -144,6 +145,47 @@ def menu_screen(window: pygame.Surface, name: str, connection_lost: bool=False) 
 
         pygame.display.update()
 
+
+PIECE_IMAGES = {
+    "queen_w": piece.queen_img_w,
+    "rook_w": piece.rook_img_w,
+    "bishop_w": piece.bishop_img_w,
+    "knight_w": piece.knight_img_w,
+    "queen_b": piece.queen_img_b,
+    "rook_b": piece.rook_img_b,
+    "bishop_b": piece.bishop_img_b,
+    "knight_b": piece.knight_img_b
+}
+
+def create_promotion_window(window, color):
+    # Создание окна для выбора фигуры
+    promotion_window = pygame.Surface((300, 100))
+    promotion_window.fill(WHITE)  # Белый фон
+
+    # Расположение изображений фигур
+    piece_names = ["queen", "rook", "bishop", "knight"]
+    buttons = []
+
+    offset_between_images = 75
+    for i, piece_name in enumerate(piece_names):
+        img = PIECE_IMAGES[f"{piece_name}_{color}"]
+        img_rect = img.get_rect(topleft=(i * offset_between_images, 0))
+        promotion_window.blit(img, img_rect)
+        buttons.append((img_rect, piece_name))
+
+    return promotion_window, buttons
+
+def handle_promotion_click(buttons, mouse_pos, promo_window_pos):
+    #переходим в систему координат нового окна
+    relative_mouse_pos = (mouse_pos[0] - promo_window_pos[0], mouse_pos[1] - promo_window_pos[1])
+    for rect, piece_name in buttons:
+        print(f'mouse_pos == {relative_mouse_pos}')
+        #функция проверяет лежат ли координаты в прямоугольнике
+        if rect.collidepoint(relative_mouse_pos):
+            return piece_name
+    return None
+
+
 #основной метод, тут происходит вся игра
 def chess_game(window: pygame.Surface, client: Client) -> None:
     #отрисовываем задник
@@ -212,25 +254,35 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
                 if board.click(client.name, row, col, window):
                     replacement = None
 
-                    #если пешка дошла до края, то вызываем ущербное окно
+                    #если пешка дошла до края, то вызываем окно
                     if board.board[row][col].piece_name == "pawn" and (
                             row == 0 and board.board[row][col].color == "w" or
                             row == 7 and board.board[row][col].color == "b"):
-                        new_piece = []
-
-                        root = tk.Tk()
-                        tk.Label(root, text="Enter the piece you want to replace your pawn with").grid(row=0)
-                        piece_input = tk.Entry(root)
-                        piece_input.grid(row=1)
-                        tk.Button(root, text="Enter", command=lambda: new_piece.append(get_piece(root, piece_input, row, col, board.board[row][col].color))).grid(row=2, pady=4)
-
-                        root.mainloop()
-
-                        board.board[row][col] = new_piece[-1]
-                        board.update_valid_moves()
-                        board.board[row][col].draw(window)
-
-                        replacement = new_piece[-1].piece_name
+                        promotion_window, buttons = create_promotion_window(window, board.board[row][col].color)
+                        promo_window_pos = (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 50)
+                        while True:
+                            for event in pygame.event.get():
+                                if event.type == pygame.QUIT:
+                                    pygame.quit()
+                                    exit()
+                                elif event.type == pygame.MOUSEBUTTONDOWN:
+                                    mouse_pos = pygame.mouse.get_pos()
+                                    piece_name = handle_promotion_click(buttons, mouse_pos, promo_window_pos)
+                                    if piece_name:
+                                        new_piece = get_piece(piece_name, row, col, board.board[row][col].color)
+                                        board.board[row][col] = new_piece
+                                        board.update_valid_moves()
+                                        board.board[row][col].draw(window)
+                                        replacement = new_piece.piece_name
+                                        break
+                            if replacement:
+                                break
+                            window.blit(promotion_window, promo_window_pos)
+                            pygame.display.update()
+                        # Убираем окно после выбора фигуры
+                        window.fill(BLACK)
+                        board.draw(window, client.name)
+                        pygame.display.update()
 
                     #отправляем оппоненту данные о перестановке, чтобы он обновил доску и начал ход
                     try:

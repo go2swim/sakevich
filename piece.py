@@ -89,24 +89,18 @@ def create_piece(row: int, col: int, piece_name: str, color: str) -> Piece | Non
     return None
 
 
-def get_piece(root: tk.Tk, piece_input: tk.Entry, row: int, col: int, color: str) -> Piece | None:
-    piece = piece_input.get()
-
-    match piece.lower():
+def get_piece(piece_name: str, row: int, col: int, color: str) -> Piece | None:
+    match piece_name.lower():
         case "queen":
-            root.destroy()
             return Queen(row, col, color, "queen")
         case "knight":
-            root.destroy()
             return Knight(row, col, color, "knight")
         case "rook":
-            root.destroy()
             return Rook(row, col, color, "rook")
         case "bishop":
-            root.destroy()
             return Bishop(row, col, color, "bishop")
 
-    return create_piece(row, col, piece, color)
+    return create_piece(row, col, piece_name, color)
 
 
 class Piece:

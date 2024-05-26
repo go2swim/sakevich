@@ -222,8 +222,6 @@ class Board:
         # чёрная заливка фона, теперь используем NEW_SCREEN_WIDTH
         pygame.draw.rect(window, BLACK, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
 
-        need_rotate = self.turn == self.bp_name
-
         # размещаем саму картинку доски, указывая центр по середине экрана
         board_rect = board_surface.get_rect()
         board_rect.left = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET
@@ -263,7 +261,7 @@ class Board:
             text = pygame.transform.rotate(text, 90)
             text_rect = text.get_rect()
             text_rect.centerx = (SCREEN_WIDTH - BOARD_LENGTH) // 8
-            text_rect.centery = SCREEN_HEIGHT // 2
+            text_rect.centery = SCREEN_HEIGHT // 4
             window.blit(text, text_rect)
 
         # отрисовка фигур
@@ -300,8 +298,8 @@ class Board:
 
         #отрисовка лога
         font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
-        white_log_x = SCREEN_WIDTH - 335  # Позиция лога белых фигур по X
-        black_log_x = SCREEN_WIDTH - 150  # Позиция лога черных фигур по X
+        white_log_x = SCREEN_WIDTH - 245  # Позиция лога белых фигур по X
+        black_log_x = SCREEN_WIDTH - 130  # Позиция лога черных фигур по X
         log_y = 50  # Начальная позиция лога по Y
         line_height = 40  # Высота строки в логе
 
@@ -320,7 +318,7 @@ class Board:
             log_text = font.render(move_text, True, WHITE)
             turn_number_text = font.render(str(offset_number + i + 1), True, WHITE)
             window.blit(log_text, (white_log_x, log_y + i * line_height))
-            window.blit(turn_number_text, (white_log_x - int(SCREEN_WIDTH // 30 + 5), log_y + i * line_height))
+            window.blit(turn_number_text, (white_log_x - int(SCREEN_WIDTH // 30), log_y + i * line_height))
 
         for i, move in enumerate(black_moves):
             move_text = move[1:]  # Убираем префикс 'b'

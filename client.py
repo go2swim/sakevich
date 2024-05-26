@@ -42,6 +42,8 @@ class Client:
                             elif command == "key_2":
                                 print('send request 2')
                                 self.send(b'add_hard_bot|', dump_pickle=False)
+                            elif command == 'tup_space':
+                                pass
                             else:
                                 raise ValueError(f'Incorrect command in queue: {command}')
 
