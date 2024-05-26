@@ -3,8 +3,7 @@ import os
 import pygame
 import tkinter as tk
 from concurrent.futures.thread import ThreadPoolExecutor
-
-from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
+from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, BOARD_OFFSET, BOARD_LENGTH
 from utils import coordinate_builder_to_absolute_coord
 from client import Client
 
@@ -194,16 +193,16 @@ class Piece:
 
         self.first_move = True
 
-    def select(self, window: pygame.Surface = None) -> None:
+    def select(self, need_rotate: bool, window: pygame.Surface = None) -> None:
         self.is_selected = True
 
         if window is not None:
-            self.draw(window)
+            self.draw(window, need_rotate)
 
-    def unselect(self, window: pygame.Surface = None) -> None:
+    def unselect(self, need_rotate: bool, window: pygame.Surface = None) -> None:
         self.is_selected = False
         if window is not None:
-            self.draw(window)
+            self.draw(window, need_rotate)
 
     def one_direction(self, board: list[list[Piece, None]], candidates: set, row_change: int, col_change: int,
                       check: set) -> None:
@@ -264,11 +263,17 @@ class Piece:
 
         return True
 
-    def draw(self, window: pygame.Surface) -> tuple[int]:
+    def draw(self, window: pygame.Surface, need_rotate: bool=False) -> None:
+        #if need_rotate:
+        # self.draw_with_rotate(window)
+        # else:
+        self.draw_without_rotate(window)
+
+    def draw_without_rotate(self, window: pygame.Surface) -> None:
         # координаты левого верхнего угла
         x, y = coordinate_builder_to_absolute_coord(self.row, self.col)
 
-        # если фигура выбрана, то отрисовываем по особому
+        # если фигура выбрана то отрисовываем по особому
         if not self.is_selected:
             img = images.get(self.img_name)
         else:
@@ -278,6 +283,48 @@ class Piece:
             for row, col in self.valid_moves:
                 # строим прямоугольник соответствующий клеточке и в центре рисуем круг
                 dotx, doty = coordinate_builder_to_absolute_coord(row, col)
+
+                dot_rect = valid_move_dot.get_rect()
+                dot_rect.left = dotx
+                dot_rect.top = doty
+
+                window.blit(valid_move_dot, dot_rect)
+
+        # рисуем фигуру
+        img_rect = img.get_rect()
+        img_rect.left = x
+        img_rect.top = y
+
+        window.blit(img, img_rect)
+
+    def draw_with_rotate(self, window: pygame.Surface) -> None:
+        def rotate_180(x, y, center_x, center_y):
+            # Поворачиваем координаты на 180 градусов относительно центра
+            return 2 * center_x - x, 2 * center_y - y
+
+        # Координаты центра доски
+        center_x = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET + BOARD_LENGTH // 2
+        center_y = (SCREEN_HEIGHT - BOARD_LENGTH) // 2 + BOARD_LENGTH // 2
+
+        # Координаты левого верхнего угла фигуры
+        x, y = coordinate_builder_to_absolute_coord(self.row, self.col)
+
+        # Поворот координат фигуры
+        x, y = rotate_180(x, y, center_x, center_y)
+
+        # если фигура выбрана то отрисовываем по особому
+        if not self.is_selected:
+            img = images.get(self.img_name)
+        else:
+            img = images.get(self.img_name + "s")
+
+            # отрисовываем все возможные ходы если фигура выбрана
+            for row, col in self.valid_moves:
+                # строим прямоугольник соответствующий клеточке и в центре рисуем круг
+                dotx, doty = coordinate_builder_to_absolute_coord(row, col)
+
+                # Поворот координат возможного хода
+                dotx, doty = rotate_180(dotx, doty, center_x, center_y)
 
                 dot_rect = valid_move_dot.get_rect()
                 dot_rect.left = dotx

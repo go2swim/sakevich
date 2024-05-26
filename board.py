@@ -34,6 +34,8 @@ class Board:
         self.log = deque(maxlen=40)
         self.turn_number = 1
 
+        self.need_rotate = self.turn == self.bp_name
+
         # Black 1st row
         self.board[0][0] = Rook(0, 0, "b", "rook")
         self.board[0][1] = Knight(0, 1, "b", "knight")
@@ -101,7 +103,7 @@ class Board:
         # если нет выбраной фигуры и в клетке фигура правильного цвета то устанавливаем фигуру как выбраную
         if self.selected is None and self.board[row][col] is not None and self.board[row][col].color == p_color:
             self.selected = (row, col)
-            self.board[row][col].select(window)
+            self.board[row][col].select(window, self.need_rotate)
             return ret
         elif self.selected is None:
             return ret
@@ -222,9 +224,10 @@ class Board:
         # чёрная заливка фона, теперь используем NEW_SCREEN_WIDTH
         pygame.draw.rect(window, BLACK, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
 
-        need_rotate = self.turn == self.bp_name
 
         # размещаем саму картинку доски, указывая центр по середине экрана
+        #rotated_board_surface = pygame.transform.rotate(board_surface, 180)
+        # Получаем прямоугольник новой повернутой доски
         board_rect = board_surface.get_rect()
         board_rect.left = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET
         board_rect.top = (SCREEN_HEIGHT - BOARD_LENGTH) // 2
@@ -270,7 +273,7 @@ class Board:
         for row in range(len(self.board)):
             for piece in self.board[row]:
                 if piece is not None:
-                    piece.draw(window)
+                    piece.draw(window, self.need_rotate)
 
         # Отображение надписи если кто-то победил
         if self.winner is not None:
