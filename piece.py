@@ -205,7 +205,8 @@ class Piece:
         if not self.is_selected:
             img = images.get(self.img_name)
         else:
-            img = images.get("selected")
+            img = images.get(self.img_name).copy()
+            img.blit(images.get("selected"), (0, 0))
 
             # отрисовываем все возможные ходы если фигура выбрана
             for row, col in self.valid_moves:
