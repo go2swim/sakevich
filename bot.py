@@ -10,13 +10,6 @@ import threading
 from piece import Piece
 
 
-@dataclasses.dataclass
-class Move:
-    piece: Piece
-    current_position: tuple[int, int]
-    new_position: tuple[int, int]
-
-
 class Bot(Client):
     def __init__(self, name: str, server_addr: tuple[str, int]):
         #сюда окно с очередью ивентов не передаём т.к тут нам рисовать окно не нужно

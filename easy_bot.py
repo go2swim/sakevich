@@ -37,5 +37,7 @@ class EasyBot(Bot):
                             piece.move(move[0], move[1], self.board.board)
                             self.board.update_valid_moves()
                             print()
-                            print('Bot:' + "moved!", f'{(row, col)} -> {move}', '\n')
+                            print('Bot ' + "moved!", f'{(row, col)} -> {move}', '\n')
+                            if self.board.is_check:
+                                print("Шах чёрным!")
                             return [(row, col), move]

@@ -9,7 +9,7 @@ from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCRE
 from piece import King, Queen, Rook, Bishop, Knight, Pawn, Piece
 
 board_surface = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "chess_board.png")),
-                                       (BOARD_LENGTH, BOARD_LENGTH * 1.01538))
+                                       (BOARD_LENGTH, BOARD_LENGTH))
 
 CONST1 = 1.5
 class Board:
