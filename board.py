@@ -1,6 +1,7 @@
 import os
 import pygame
 from collections import deque
+import copy
 
 from typing import Any
 from copy import deepcopy
@@ -327,3 +328,52 @@ class Board:
 
         if self.turn == self.wp_name:
             self.turn_number += 1
+
+    def print_board(self):
+        piece_unicode = {
+            "king": {"w": "♔", "b": "♚"},
+            "queen": {"w": "♕", "b": "♛"},
+            "rook": {"w": "♖", "b": "♜"},
+            "bishop": {"w": "♗", "b": "♝"},
+            "knight": {"w": "♘", "b": "♞"},
+            "pawn": {"w": "♙", "b": "♟"}
+        }
+        result = [[None for _ in range(8)] for _ in range(8)]
+        for i in range(8):
+            for j in range(8):
+                piece = self.board[i][j]
+                if piece is None:
+                    result[i][j] = "—"
+                    continue
+
+                result[i][j] = piece_unicode[piece.piece_name][piece.color]
+        for i in range(8):
+            row = ""
+            for j in range(8):
+                row += result[i][j]
+            print(row)
+
+    def get_possible_player_moves(self):
+        """Возвращает список всех возможных ходов игрока."""
+        possible_player_moves = []
+        for row in range(len(self.board)):
+            for col in range(len(self.board[0])):
+                piece = self.board[row][col]
+                if not piece or not piece.valid_moves or piece.color != 'w':
+                    continue
+                possible_player_moves += piece.valid_moves
+        return possible_player_moves
+
+    def __deepcopy__(self, memodict={}):
+        copy_board = Board()
+        copy_board.board = copy.deepcopy(self.board)
+        copy_board.wp_name = copy.copy(self.wp_name)
+        copy_board.bp_name = copy.copy(self.bp_name)
+        copy_board.turn = copy.copy(self.turn)
+        copy_board.previous_move = copy.copy(self.previous_move)
+        copy_board.selected = self.selected
+        copy_board.is_ready = self.is_ready
+        copy_board.winner = copy.copy(self.winner)
+        copy_board.is_check = self.is_check
+        copy_board.turn_number = self.turn_number
+        return copy_board

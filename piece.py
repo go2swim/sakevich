@@ -220,6 +220,36 @@ class Piece:
 
         window.blit(img, img_rect)
 
+    def get_value(self):
+        match self.piece_name:
+            case "king":
+                return 99
+            case "queen":
+                return 9
+            case "bishop" | "knight":
+                return 3
+            case "rook":
+                return 5
+            case "pawn":
+                return 1
+        return 0
+
+    def __str__(self):
+        """Метод для вывода доски в консоль для отладки (см. Board.print_board())."""
+        return self.piece_name
+
+    def __repr__(self):
+        """Метод для вывода доски в консоль для отладки (см. Board.print_board())."""
+        return self.piece_name
+
+    def __copy__(self):
+        copy_piece = Piece(self.row, self.col, self.color, copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
+
 
 class King(Piece):
     def __init__(self, row: int, col: int, color: str, piece_name: str) -> None:
