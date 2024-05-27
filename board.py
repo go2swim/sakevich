@@ -1,15 +1,16 @@
+import copy
 import os
+import pygame
+from collections import deque
 
 from typing import Any
 from copy import deepcopy
 
-import pygame
-
 from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE, BOARD_OFFSET, TILE_LENGTH
-from piece import King, Queen, Rook, Bishop, Knight, Pawn
+from piece import King, Queen, Rook, Bishop, Knight, Pawn, Piece
 
 board_surface = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "chess_board.png")),
-                                       (BOARD_LENGTH, BOARD_LENGTH * 1.01538))
+                                       (BOARD_LENGTH, BOARD_LENGTH))
 
 CONST1 = 1.5
 class Board:
@@ -30,6 +31,9 @@ class Board:
         self.is_check = False
 
         self.board = [[None for _ in range(8)] for _ in range(8)]
+
+        self.log = deque(maxlen=40)
+        self.turn_number = 1
 
         # Black 1st row
         self.board[0][0] = Rook(0, 0, "b", "rook")
@@ -149,16 +153,57 @@ class Board:
         if self.board[bx][by] is None:
             return False
 
+        piece_unicode = {
+            "king": {"w": "♔", "b": "♚"},
+            "queen": {"w": "♕", "b": "♛"},
+            "rook": {"w": "♖", "b": "♜"},
+            "bishop": {"w": "♗", "b": "♝"},
+            "knight": {"w": "♘", "b": "♞"},
+            "pawn": {"w": "♙", "b": "♟"}
+        }
+
         # проверяем того ли цвета игрок двигает фигуру и тот ли игрок сейчас ходит
         if self.board[bx][by].color == p_color and p_name == self.turn:
             killed_piece = deepcopy(self.board[ax][ay])  # сохраняем фигуру перед удалением
+            #сохраняем параметры фигуры до обновления(для лога)
+            piece_move = self.board[bx][by]
+            if piece_move.piece_name == 'king':
+                rochade = piece_move.rochade
             # вызываем move уже у самой фигуры и проверяем правильность хода
             if self.board[bx][by].move(*pos_after, self.board, window, replacement):
                 if killed_piece is not None:
                     if killed_piece.piece_name == "king":  # если убитая фигура король то объявляется победитель
                         self.update_winner(self.turn)
 
+                def get_log_name(piece :Piece) -> str:
+                    name = piece.piece_name
+                    if name == 'knight': return 'N'
+                    return name[:1].title()
+
+
                 self.update_valid_moves()  # обновляем списко возможных ходов
+                # Логирование хода
+                # Жалко убирать с красивыми символами(console_log) в сраном пайгеме они не отображаются((
+                console_log = f"{piece_unicode[piece_move.piece_name][piece_move.color]}{chr(ay + 97)}{8 - ax + 1}"
+                if piece_move.piece_name == 'pawn':
+                    move_log = f'{chr(ay + 97)}{8 - ax + 1}'
+                else:
+                    move_log = f'{get_log_name(piece_move)}{chr(ay + 97)}{8 - ax + 1}'
+                if killed_piece is not None:
+                    console_log += f"x{piece_unicode[killed_piece.piece_name][killed_piece.color]}"
+                    if piece_move.piece_name != 'pawn':
+                        move_log = f"{get_log_name(piece_move)}x{chr(ay + 97)}{8 - ax + 1}"
+                    else:
+                        move_log = f"{chr(by + 97)}{8 - bx + 1}x{chr(ay + 97)}{8 - ax + 1}"
+                if self.is_check:
+                    console_log += '+'
+                    move_log +="+"
+                if piece_move.piece_name == 'king' and (ax, ay) in rochade:
+                    console_log = f'O-O-O' if ay < by else f'O-O'
+                    move_log = 'K O-O-O' if ay < by else f'K O-O'
+                self.log.append(f'{piece_move.color}{move_log}')
+                #print(console_log)
+
                 self.turn = self.bp_name if self.turn == self.wp_name else self.wp_name  # меняем цвет ходящего
                 return True
 
@@ -185,11 +230,11 @@ class Board:
         window.blit(board_surface, board_rect)  # натягивает изображение на наш прямоугольник
 
         # инициализируем шрифт
-        font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
+        log_font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
 
         # создаём текст и красим его в зелёный в соответствии какой игрок ходит
-        text_bp = font.render(self.bp_name, True, GREEN if self.turn == self.bp_name else WHITE)
-        text_wp = font.render(self.wp_name, True, GREEN if self.turn == self.wp_name else WHITE)
+        text_bp = log_font.render(self.bp_name, True, GREEN if self.turn == self.bp_name else WHITE)
+        text_wp = log_font.render(self.wp_name, True, GREEN if self.turn == self.wp_name else WHITE)
 
         # координаты для текста
         text_bp_rect = text_bp.get_rect()
@@ -205,7 +250,7 @@ class Board:
 
         # отображение имени игрока справа
         if p_name:
-            text_you = font.render(f"You: {p_name}", True, WHITE)
+            text_you = log_font.render(f"You: {p_name}", True, WHITE)
             text_you = pygame.transform.rotate(text_you, -90)
             text_you_rect = text_you.get_rect()
             text_you_rect.center = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET / 2, SCREEN_HEIGHT // 2
@@ -213,11 +258,11 @@ class Board:
 
         # отображается текст Check при шахе
         if self.is_check:
-            text = font.render("Check", True, RED)
+            text = log_font.render("Check", True, RED)
             text = pygame.transform.rotate(text, 90)
             text_rect = text.get_rect()
             text_rect.centerx = (SCREEN_WIDTH - BOARD_LENGTH) // 8
-            text_rect.centery = SCREEN_HEIGHT // 2
+            text_rect.centery = SCREEN_HEIGHT // 4
             window.blit(text, text_rect)
 
         # отрисовка фигур
@@ -228,24 +273,107 @@ class Board:
 
         # Отображение надписи если кто-то победил
         if self.winner is not None:
-            font = pygame.font.SysFont(FONT, SCREEN_HEIGHT // 7)
-            text = font.render(f"{self.winner} WON", True, GREEN)
+            log_font = pygame.font.SysFont(FONT, SCREEN_HEIGHT // 7)
+            text = log_font.render(f"{self.winner} WON", True, GREEN)
             text_rect = text.get_rect()
             text_rect.center = board_rect.center
             window.blit(text, text_rect)
 
-        # Добавление нумерации клеток снизу
-        numbering_font = pygame.font.SysFont(FONT, int(TILE_LENGTH // 3)) #отдельный шрифт для подписей клеток
+        # Отображение цифр слева
+        font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
+        square_size = BOARD_LENGTH // 8
+        # Отображение цифр справа
         for i in range(8):
-            num_text = numbering_font.render(str(i + 1), True, WHITE)
+            num_text = font.render(str(8 - i), True, WHITE)
             num_text_rect = num_text.get_rect()
-            num_text_rect.center = board_rect.left + TILE_LENGTH * (i + 0.5), board_rect.bottom + TILE_LENGTH / 4
+            num_text_rect.center = (board_rect.right + square_size / 4, board_rect.top + square_size * (i + 0.5))
             window.blit(num_text, num_text_rect)
 
-        # Добавление буквенных обозначений справа
-        letters = 'ABCDEFGH'
+        # Отображение букв снизу
+        letters = 'abcdefgh'
         for i in range(8):
-            letter_text = numbering_font.render(letters[i], True, WHITE)
+            letter_text = font.render(letters[i], True, WHITE)
             letter_text_rect = letter_text.get_rect()
-            letter_text_rect.center = board_rect.right + TILE_LENGTH / 4, board_rect.top + TILE_LENGTH * (i + 0.5)
+            letter_text_rect.center = (board_rect.left + square_size * (i + 0.5), board_rect.bottom + square_size / 4)
             window.blit(letter_text, letter_text_rect)
+
+        #отрисовка лога
+        font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
+        white_log_x = SCREEN_WIDTH - 245  # Позиция лога белых фигур по X
+        black_log_x = SCREEN_WIDTH - 130  # Позиция лога черных фигур по X
+        log_y = 50  # Начальная позиция лога по Y
+        line_height = 40  # Высота строки в логе
+
+        white_label = font.render("White", True, WHITE)
+        black_label = font.render("Black", True, WHITE)
+        window.blit(white_label, (white_log_x, log_y - line_height))
+        window.blit(black_label, (black_log_x, log_y - line_height))
+
+        white_moves = [move for move in self.log if move.startswith('w')]
+        black_moves = [move for move in self.log if move.startswith('b')]
+
+        offset_number = self.turn_number % 19 if self.turn_number // 19 >= 1 else 0
+
+        for i, move in enumerate(white_moves):
+            move_text = move[1:]  # Убираем префикс 'w'
+            log_text = font.render(move_text, True, WHITE)
+            turn_number_text = font.render(str(offset_number + i + 1), True, WHITE)
+            window.blit(log_text, (white_log_x, log_y + i * line_height))
+            window.blit(turn_number_text, (white_log_x - int(SCREEN_WIDTH // 30), log_y + i * line_height))
+
+        for i, move in enumerate(black_moves):
+            move_text = move[1:]  # Убираем префикс 'b'
+            log_text = font.render(move_text, True, WHITE)
+            window.blit(log_text, (black_log_x, log_y + i * line_height))
+
+        if self.turn == self.wp_name:
+            self.turn_number += 1
+
+    def print_board(self):
+        piece_unicode = {
+            "king": {"w": "♔", "b": "♚"},
+            "queen": {"w": "♕", "b": "♛"},
+            "rook": {"w": "♖", "b": "♜"},
+            "bishop": {"w": "♗", "b": "♝"},
+            "knight": {"w": "♘", "b": "♞"},
+            "pawn": {"w": "♙", "b": "♟"}
+        }
+        result = [[None for _ in range(8)] for _ in range(8)]
+        for i in range(8):
+            for j in range(8):
+                piece = self.board[i][j]
+                if piece is None:
+                    result[i][j] = "—"
+                    continue
+
+                result[i][j] = piece_unicode[piece.piece_name][piece.color]
+        for i in range(8):
+            row = ""
+            for j in range(8):
+                row += result[i][j]
+            print(row)
+
+    def get_possible_player_moves(self):
+        """Возвращает список всех возможных ходов игрока."""
+        possible_player_moves = []
+        for row in range(len(self.board)):
+            for col in range(len(self.board[0])):
+                piece = self.board[row][col]
+                if not piece or not piece.valid_moves or piece.color != 'w':
+                    continue
+                possible_player_moves += piece.valid_moves
+        return possible_player_moves
+
+    def __deepcopy__(self, memodict={}):
+        copy_board = Board()
+        copy_board.board = copy.deepcopy(self.board)
+        copy_board.wp_name = copy.copy(self.wp_name)
+        copy_board.bp_name = copy.copy(self.bp_name)
+        copy_board.turn = copy.copy(self.turn)
+        copy_board.previous_move = copy.copy(self.previous_move)
+        copy_board.selected = self.selected
+        copy_board.is_ready = self.is_ready
+        copy_board.winner = copy.copy(self.winner)
+        copy_board.is_check = self.is_check
+        copy_board.turn_number = self.turn_number
+        return copy_board

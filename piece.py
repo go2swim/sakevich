@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 import pygame
 import tkinter as tk
+import copy
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
@@ -291,6 +292,36 @@ class Piece:
         img_rect.top = y
 
         window.blit(img, img_rect)
+
+    def get_value(self):
+        match self.piece_name:
+            case "king":
+                return 99
+            case "queen":
+                return 9
+            case "bishop"|"knight":
+                return 3
+            case "rook":
+                return 5
+            case "pawn":
+                return 1
+        return 0
+
+    def __str__(self):
+        """Метод для вывода доски в консоль для отладки (см. Board.print_board())."""
+        return self.piece_name
+
+    def __repr__(self):
+        """Метод для вывода доски в консоль для отладки (см. Board.print_board())."""
+        return self.piece_name
+
+    def __copy__(self):
+        copy_piece = Piece(self.row, self.col, self.color, copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
 
 
 class King(Piece):
