@@ -5,14 +5,27 @@ import copy
 
 from typing import Any
 from copy import deepcopy
+from threading import Lock
 
-from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE, BOARD_OFFSET, TILE_LENGTH
+from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE, BOARD_OFFSET, \
+    TILE_LENGTH, TIME_TO_MOVE, LEN_LOG
 from piece import King, Queen, Rook, Bishop, Knight, Pawn, Piece
 
 board_surface = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "chess_board.png")),
                                        (BOARD_LENGTH, BOARD_LENGTH))
 
 CONST1 = 1.5
+piece_unicode = {
+        "king": {"w": "♔", "b": "♚"},
+        "queen": {"w": "♕", "b": "♛"},
+        "rook": {"w": "♖", "b": "♜"},
+        "bishop": {"w": "♗", "b": "♝"},
+        "knight": {"w": "♘", "b": "♞"},
+        "pawn": {"w": "♙", "b": "♟"}
+    }
+
+lock = Lock()
+
 class Board:
     def __init__(self, wp_name: str = None, bp_name: str = None) -> None:
         self.wp_name = wp_name  # имя пользователя играющего за белые
@@ -32,8 +45,11 @@ class Board:
 
         self.board = [[None for _ in range(8)] for _ in range(8)]
 
-        self.log = deque(maxlen=40)
+        self.log = deque(maxlen=LEN_LOG)
         self.turn_number = 1
+
+        self.mode = None
+        self.timers = {}
 
         # Black 1st row
         self.board[0][0] = Rook(0, 0, "b", "rook")
@@ -63,6 +79,13 @@ class Board:
             for col in range(len(self.board[row])):
                 if self.board[row][col] is not None:
                     self.board[row][col].update_valid_moves(self.board)
+
+    def set_mode(self, mode: str) -> None:
+        if mode == self.mode:
+            self.mode = None
+        else:
+            self.mode = mode
+        print(f'mode change to: {self.mode}')
 
     def set_name(self, p_name: str) -> None:
         if self.is_ready:
@@ -134,6 +157,35 @@ class Board:
     def update_winner(self, winner: str) -> None:
         self.winner = winner
 
+    def update_log(self, piece_move, killed_piece, pos_before, pos_after, rochade) -> None:
+        def get_log_name(piece: Piece) -> str:
+            name = piece.piece_name
+            if name == 'knight': return 'N'
+            return name[:1].title()
+
+        bx, by = pos_before
+        ax, ay = pos_after
+        console_log = f"{piece_unicode[piece_move.piece_name][piece_move.color]}{chr(ay + 97)}{8 - ax + 1}"
+        if piece_move.piece_name == 'pawn':
+            move_log = f'{chr(ay + 97)}{8 - ax + 1}'
+        else:
+            move_log = f'{get_log_name(piece_move)}{chr(ay + 97)}{8 - ax + 1}'
+        if killed_piece is not None:
+            console_log += f"x{piece_unicode[killed_piece.piece_name][killed_piece.color]}"
+            if piece_move.piece_name != 'pawn':
+                move_log = f"{get_log_name(piece_move)}x{chr(ay + 97)}{8 - ax + 1}"
+            else:
+                move_log = f"{chr(by + 97)}{8 - bx + 1}x{chr(ay + 97)}{8 - ax + 1}"
+        if self.is_check:
+            console_log += '+'
+            move_log += "+"
+        if piece_move.piece_name == 'king' and (ax, ay) in rochade:
+            console_log = f'O-O-O' if ay < by else f'O-O'
+            move_log = 'K O-O-O' if ay < by else f'K O-O'
+        self.log.append(f'{piece_move.color}{move_log}')
+
+    # print(console_log)
+
     def move(self, p_name: str, pos_before: tuple[int], pos_after: tuple[int], window: pygame.Surface = None,
              replacement: str = None, **_) -> bool:
         # проверяем началась ли игра и не закончилась ли
@@ -153,20 +205,12 @@ class Board:
         if self.board[bx][by] is None:
             return False
 
-        piece_unicode = {
-            "king": {"w": "♔", "b": "♚"},
-            "queen": {"w": "♕", "b": "♛"},
-            "rook": {"w": "♖", "b": "♜"},
-            "bishop": {"w": "♗", "b": "♝"},
-            "knight": {"w": "♘", "b": "♞"},
-            "pawn": {"w": "♙", "b": "♟"}
-        }
-
         # проверяем того ли цвета игрок двигает фигуру и тот ли игрок сейчас ходит
         if self.board[bx][by].color == p_color and p_name == self.turn:
             killed_piece = deepcopy(self.board[ax][ay])  # сохраняем фигуру перед удалением
             #сохраняем параметры фигуры до обновления(для лога)
             piece_move = self.board[bx][by]
+            rochade = set()
             if piece_move.piece_name == 'king':
                 rochade = piece_move.rochade
             # вызываем move уже у самой фигуры и проверяем правильность хода
@@ -175,34 +219,10 @@ class Board:
                     if killed_piece.piece_name == "king":  # если убитая фигура король то объявляется победитель
                         self.update_winner(self.turn)
 
-                def get_log_name(piece :Piece) -> str:
-                    name = piece.piece_name
-                    if name == 'knight': return 'N'
-                    return name[:1].title()
-
-
                 self.update_valid_moves()  # обновляем списко возможных ходов
+
                 # Логирование хода
-                # Жалко убирать с красивыми символами(console_log) в сраном пайгеме они не отображаются((
-                console_log = f"{piece_unicode[piece_move.piece_name][piece_move.color]}{chr(ay + 97)}{8 - ax + 1}"
-                if piece_move.piece_name == 'pawn':
-                    move_log = f'{chr(ay + 97)}{8 - ax + 1}'
-                else:
-                    move_log = f'{get_log_name(piece_move)}{chr(ay + 97)}{8 - ax + 1}'
-                if killed_piece is not None:
-                    console_log += f"x{piece_unicode[killed_piece.piece_name][killed_piece.color]}"
-                    if piece_move.piece_name != 'pawn':
-                        move_log = f"{get_log_name(piece_move)}x{chr(ay + 97)}{8 - ax + 1}"
-                    else:
-                        move_log = f"{chr(by + 97)}{8 - bx + 1}x{chr(ay + 97)}{8 - ax + 1}"
-                if self.is_check:
-                    console_log += '+'
-                    move_log +="+"
-                if piece_move.piece_name == 'king' and (ax, ay) in rochade:
-                    console_log = f'O-O-O' if ay < by else f'O-O'
-                    move_log = 'K O-O-O' if ay < by else f'K O-O'
-                self.log.append(f'{piece_move.color}{move_log}')
-                #print(console_log)
+                self.update_log(piece_move, killed_piece, pos_before, pos_after, rochade)
 
                 self.turn = self.bp_name if self.turn == self.wp_name else self.wp_name  # меняем цвет ходящего
                 return True
@@ -312,7 +332,7 @@ class Board:
         white_moves = [move for move in self.log if move.startswith('w')]
         black_moves = [move for move in self.log if move.startswith('b')]
 
-        offset_number = self.turn_number % 19 if self.turn_number // 19 >= 1 else 0
+        offset_number = self.turn_number % (LEN_LOG - 1) if self.turn_number // (LEN_LOG - 1) >= 1 else 0
 
         for i, move in enumerate(white_moves):
             move_text = move[1:]  # Убираем префикс 'w'
@@ -328,6 +348,49 @@ class Board:
 
         if self.turn == self.wp_name:
             self.turn_number += 1
+
+        with lock:
+            self.update_time_in_board(window)
+
+    def update_time_in_board(self, window: pygame.Surface):
+        def format_time(seconds):
+            minutes = seconds // 60
+            seconds = seconds % 60
+            return f"{minutes:02}:{seconds:02}"
+
+        if len(self.timers) < 2:
+            self.timers = {self.wp_name: TIME_TO_MOVE, self.bp_name: TIME_TO_MOVE}
+
+        font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
+        board_rect = board_surface.get_rect()
+        board_rect.left = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET
+        board_rect.top = (SCREEN_HEIGHT - BOARD_LENGTH) // 2
+
+        # Координаты для очистки областей таймеров
+        wp_time_rect = pygame.Rect(
+            (board_rect.centerx + 80, board_rect.bottom + (SCREEN_HEIGHT - BOARD_LENGTH) // 3 - 10, 100, 30))
+        bp_time_rect = pygame.Rect(
+            (board_rect.centerx + 80, board_rect.top - (SCREEN_HEIGHT - BOARD_LENGTH) // 4, 100, 30))
+
+        # Очистка старых таймеров
+        pygame.draw.rect(window, BLACK, wp_time_rect)
+        pygame.draw.rect(window, BLACK, bp_time_rect)
+
+        # Время для белого игрока
+        wp_time = self.timers[self.wp_name]
+        if wp_time is not None:
+            wp_time_text = font.render(format_time(wp_time), True, WHITE)
+            window.blit(wp_time_text, wp_time_rect)
+
+        # Время для черного игрока
+        bp_time = self.timers[self.bp_name]
+        if bp_time is not None:
+            bp_time_text = font.render(format_time(bp_time), True, WHITE)
+            window.blit(bp_time_text, bp_time_rect)
+
+        pygame.display.update()
+
+
 
     def print_board(self):
         piece_unicode = {

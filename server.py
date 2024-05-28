@@ -74,16 +74,17 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
                 except UnicodeDecodeError:
                     raise UnicodeDecodeError("incorrect message format from the client")
 
-                #если отправили одновреммено две команды то просто смотрим первую
-                message = response.split('|')[0]
-
-                if message == 'add_easy_bot':
+                message = response.split('|')
+                if 'blitz' in message:
+                    boards[(connection_count - 1) // 2].set_mode('blitz')
+                    print(f'board mode update to {boards[(connection_count - 1) // 2].mode}')
+                elif 'add_easy_bot' in message:
                     print("add_easy_bot")
                     with lock:
                         bot_thread = threading.Thread(target=create_bot, args=(f"Bot {connection_number + 1}", 'easy'))
                         bot_thread.start()
                         break
-                elif message == 'add_hard_bot':
+                elif 'add_hard_bot' in message:
                     with lock:
                         bot_thread = threading.Thread(target=create_bot, args=(f"Bot {connection_number + 1}", 'hard'))
                         bot_thread.start()
@@ -94,6 +95,7 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
             except socket.timeout:
                 continue  # Игнорируем таймауты и продолжаем ожидание
             except Exception as e:
+                raise e
                 print(f"Error while waiting for opponent: {e}")
                 client_socket.close()
                 connection_count -= 1
@@ -147,6 +149,15 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
 
             print(f'{threading.current_thread().name}: get from {client_names[connection_sockets.index(client_socket)]}')
 
+            deserialized_command = pickle.loads(command)
+            if (isinstance(deserialized_command, str) and deserialized_command.startswith('TIME:')):
+                if client_names[communicating_client_num].startswith('Bot'):
+                    continue
+                print(f'get time:{deserialized_command[5:]}')
+                board.timers[client_names[connection_sockets.index(client_socket)]] = int(deserialized_command[5:])
+                connection_sockets[communicating_client_num].send(command)
+                continue
+
             board.command(pickle.loads(command))  # десериализуем словарь и отправляем доске
             # сделали изменения на доске в соответсвии с командой, изменили команду и отсылаем обратно оппоненту
             connection_sockets[communicating_client_num].send(command)
@@ -165,7 +176,6 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
 
 if __name__ == "__main__":
     print("[WAITING] for incoming connections")
-
     while True:
         # ждём нового подключения
         client_socket, addr = server_socket.accept()
@@ -183,4 +193,5 @@ if __name__ == "__main__":
         # передаём socket для передачи данных, доску на которой будет игра и порядковый номер клиента
         thread = Thread(target=client_thread, args=(client_socket, boards[-1], len(connection_sockets) - 1))
         thread.start()
+
 

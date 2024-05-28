@@ -16,6 +16,7 @@ class Client:
     def connect(self, window: pygame.Surface, key_event_queue: Queue) -> bytes:
         # конектим сокет к серверу по адресу и порту, далее можно обмениваться с помощью него данными
         self.socket.connect(self.server_addr)
+        mode = False
 
         while True:
             try:
@@ -30,18 +31,22 @@ class Client:
                         remaining_time = float(data[0][5:])
 
                         from window import draw_waiting
-                        draw_waiting(window, remaining_time)
+                        draw_waiting(window, remaining_time, mode)
 
                         # Проверяем очередь сообщений на команду добавления бота
                         if not key_event_queue.empty():
                             command = key_event_queue.get()
                             if command == "key_1":
                                 # Отсылаем на сервер, что бот добавлен
-                                print('send request 1')
                                 self.send(b'add_easy_bot|', dump_pickle=False)
+                                print('send request 1')
                             elif command == "key_2":
-                                print('send request 2')
                                 self.send(b'add_hard_bot|', dump_pickle=False)
+                                print('send request 2')
+                            elif command == "key_3":
+                                self.send(b'blitz|', dump_pickle=False)
+                                mode = not mode
+                                print('send request blitz')
                             elif command == 'tup_space':
                                 pass
                             else:

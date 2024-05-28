@@ -10,9 +10,8 @@ import utils
 from tkinter import messagebox
 from client import Client
 from piece import get_piece
-from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK, RED
-
-
+from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK, \
+    RED, TIME_TO_MOVE
 
 
 def draw_start_menu(window: pygame.Surface, name: str, connection_lost: bool=False, connection_refused: bool=False) -> None:
@@ -54,8 +53,17 @@ def draw_start_menu(window: pygame.Surface, name: str, connection_lost: bool=Fal
 
     pygame.display.update()
 
-def draw_waiting(window: pygame.Surface, remaining_time: float) -> None:
+def draw_waiting(window: pygame.Surface, remaining_time: float, mode: bool) -> None:
     window.fill(BLACK)
+
+    if mode:
+        alarm_img = pygame.transform.scale(
+            pygame.image.load(os.path.join("assets", "images", "alarm_clock.png")),
+            (TILE_LENGTH, TILE_LENGTH))
+        alarm_rect = alarm_img.get_rect()
+        alarm_rect.center = ((SCREEN_WIDTH - TILE_LENGTH), (SCREEN_HEIGHT - TILE_LENGTH))
+        window.blit(alarm_img, alarm_rect)
+
 
     #аналогично рисуем экран ожидания
     font = pygame.font.SysFont(FONT, SCREEN_HEIGHT//20)
@@ -64,6 +72,7 @@ def draw_waiting(window: pygame.Surface, remaining_time: float) -> None:
     text3 = font.render(f"Press :", True, WHITE)
     text4 = font.render(f"1 - if you want to add a easy bot", True, WHITE)
     text5 = font.render(f"2 - if you want to add a hard bot", True, WHITE)
+    text6 = font.render(f"3 - blitz", True, WHITE)
 
     indentation_between_blocks = 60
 
@@ -82,11 +91,15 @@ def draw_waiting(window: pygame.Surface, remaining_time: float) -> None:
     text_rect5 = text5.get_rect()
     text_rect5.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + indentation_between_blocks * 2)
 
+    text_rect6 = text6.get_rect()
+    text_rect6.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + indentation_between_blocks * 3)
+
     window.blit(text1, text_rect1)
     window.blit(text2, text_rect2)
     window.blit(text3, text_rect3)
     window.blit(text4, text_rect4)
     window.blit(text5, text_rect5)
+    window.blit(text6, text_rect6)
 
     pygame.display.update()
 
@@ -122,6 +135,9 @@ def menu_screen(window: pygame.Surface, name: str, connection_lost: bool=False) 
                 elif event.key == pygame.K_2:
                     print("2 pressed")
                     key_event_queue.put("key_2")
+                elif event.key == pygame.K_3:
+                    print('3 pressed')
+                    key_event_queue.put("key_3")
 
         if client_thread is None:
             if not key_event_queue.empty():
@@ -213,6 +229,48 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
     receive_thread.daemon = True
     #запускаем receive_move в отдельном потоке11
     receive_thread.start()
+    lock = threading.Lock()
+
+    def update_timer():
+        print(f'timer start working')
+
+        last_update_time = time.perf_counter()
+
+        def update_timer_for_player(name: str):
+            nonlocal last_update_time
+            current_time = time.perf_counter()
+            elapsed_time = current_time - last_update_time
+            if elapsed_time >= 1:
+                time_in_board = board.timers[name]
+                update_time = time_in_board - int(elapsed_time)
+                if update_time <= 0:
+                    board.update_winner = client.name
+                    return
+
+                board.timers[name] = update_time
+                print(f'time:{board.timers[name]}')
+
+                with lock:
+                    board.update_time_in_board(window)
+
+                last_update_time = current_time
+
+                client.send(f'TIME:{board.timers[name]}')
+
+        while True:
+            if board.turn.startswith('Bot') or board.turn == client.name:
+                update_timer_for_player(board.turn)
+            else:
+                # Сброс времени последнего обновления, чтобы время не уменьшалось, пока другой игрок ходит
+                last_update_time = time.perf_counter()
+
+            time.sleep(0.01)
+
+
+    if board.mode == 'blitz':
+        board.timers[client.name] = TIME_TO_MOVE
+        timer_thread = threading.Thread(target=update_timer)
+        timer_thread.start()
 
     while True:
         if board.winner is not None:
@@ -224,13 +282,19 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
             command = command_queue.get_nowait()
             if command == "connection_lost":
                 menu_screen(window, client.name, connection_lost=True)
-            else:
+            elif isinstance(command, dict):
                 command["window"] = window
                 command["my_name"] = client.name
                 #даём доске обработать входящюю команду и обновится
                 #в обработку входит и отрисовка на нашем окне
                 board.command(command, window)
                 print('get command')
+            elif isinstance(command, str) and command.startswith('TIME:'):
+                with lock:
+                    board.timers[board.turn] = int(command[5:])
+                    board.update_time_in_board(window)
+            else:
+                raise ValueError(f"Incorrect request{command}")
         except queue.Empty:
             pass
 
