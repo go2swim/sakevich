@@ -18,7 +18,9 @@ class Board:
         self.wp_name = wp_name  # имя пользователя играющего за белые
         self.bp_name = bp_name  # имя пользователя играющего за чёрные
 
-        self.previous_move = None
+        # поле вида ((до), (после), (убитая фигура))
+        self.last_move = None
+        self.moves_history = []
         self.turn = wp_name  # имя ходящего
 
         self.selected = None
@@ -171,6 +173,8 @@ class Board:
                 rochade = piece_move.rochade
             # вызываем move уже у самой фигуры и проверяем правильность хода
             if self.board[bx][by].move(*pos_after, self.board, window, replacement):
+                self.last_move = ((bx, by), pos_after, killed_piece, self.turn, self.turn_number)
+                self.moves_history.append(self.last_move)
                 if killed_piece is not None:
                     if killed_piece.piece_name == "king":  # если убитая фигура король то объявляется победитель
                         self.update_winner(self.turn)
@@ -370,7 +374,7 @@ class Board:
         copy_board.wp_name = copy.copy(self.wp_name)
         copy_board.bp_name = copy.copy(self.bp_name)
         copy_board.turn = copy.copy(self.turn)
-        copy_board.previous_move = copy.copy(self.previous_move)
+        copy_board.last_move = copy.copy(self.last_move)
         copy_board.selected = self.selected
         copy_board.is_ready = self.is_ready
         copy_board.winner = copy.copy(self.winner)
@@ -378,5 +382,22 @@ class Board:
         copy_board.turn_number = self.turn_number
         return copy_board
 
-    def __eq__(self, other):
-        return False # :(
+    def undo_last_move(self):
+        last = self.moves_history[len(self.moves_history) - 1]
+
+        self.turn_number = self.turn_number - 1 if self.turn == self.wp_name else self.turn_number
+        self.turn = self.wp_name if self.turn == self.bp_name else self.bp_name
+
+        x_to_undo, y_to_undo = last[0][0], last[0][1]
+        x, y = last[1][0], last[1][1]
+
+        piece = copy.copy(self.board[x][y])
+        if piece.piece_name == "pawn" and abs(x - x_to_undo) == 2:
+            piece.first_move = True
+        self.board[x_to_undo][y_to_undo] = piece
+        piece.row, piece.col = x_to_undo, y_to_undo
+        self.board[x][y] = last[2]
+        self.update_valid_moves()
+
+        if self.moves_history:
+            self.moves_history.pop(len(self.moves_history) - 1)

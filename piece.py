@@ -168,6 +168,7 @@ class Piece:
              replacement: str = None) -> bool:
         # координаты куда перемещаем фигуру
         if (row, col) not in self.valid_moves:
+            print("Чё")
             return False
 
         self.first_move = False
@@ -189,7 +190,6 @@ class Piece:
         # перерисовываем доску в переданом окне после перемещений
         if window is not None:
             board[self.row][self.col].draw(window)
-
         return True
 
     def draw(self, window: pygame.Surface) -> tuple[int]:
@@ -244,7 +244,7 @@ class Piece:
         return self.piece_name
 
     def __copy__(self):
-        copy_piece = Piece(self.row, self.col, self.color, copy.copy(self.piece_name))
+        copy_piece = Piece(self.row, self.col, copy.copy(self.color), copy.copy(self.piece_name))
         copy_piece.img_name = copy.copy(self.img_name)
         copy_piece.is_selected = self.is_selected
         copy_piece.valid_moves = copy.copy(self.valid_moves)
@@ -303,6 +303,14 @@ class King(Piece):
 
         return candidates, check
 
+    def __copy__(self):
+        copy_piece = King(self.row, self.col, copy.copy(self.color), copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
+
 
 class Queen(Piece):
     def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
@@ -334,6 +342,14 @@ class Queen(Piece):
 
         return candidates, True in check
 
+    def __copy__(self):
+        copy_piece = Queen(self.row, self.col, copy.copy(self.color), copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
+
 
 class Rook(Piece):
     def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
@@ -352,6 +368,14 @@ class Rook(Piece):
 
         return candidates, True in check
 
+    def __copy__(self):
+        copy_piece = Rook(self.row, self.col, copy.copy(self.color), copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
+
 
 class Bishop(Piece):
     def all_valid_moves(self, board: list[list[Piece, None]]) -> tuple[set, bool]:
@@ -369,6 +393,14 @@ class Bishop(Piece):
                     change[0] *= -1
 
         return candidates, True in check
+
+    def __copy__(self):
+        copy_piece = Bishop(self.row, self.col, copy.copy(self.color), copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
 
 
 class Knight(Piece):
@@ -396,6 +428,14 @@ class Knight(Piece):
             change[int(i % 4 in (0, 1))] *= -1
 
         return candidates, check
+
+    def __copy__(self):
+        copy_piece = Knight(self.row, self.col, copy.copy(self.color), copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
 
 
 class Pawn(Piece):
@@ -432,4 +472,12 @@ class Pawn(Piece):
                 check = True
 
         return candidates, check
+
+    def __copy__(self):
+        copy_piece = Pawn(self.row, self.col, copy.copy(self.color), copy.copy(self.piece_name))
+        copy_piece.img_name = copy.copy(self.img_name)
+        copy_piece.is_selected = self.is_selected
+        copy_piece.valid_moves = copy.copy(self.valid_moves)
+        copy_piece.first_move = self.first_move
+        return copy_piece
 

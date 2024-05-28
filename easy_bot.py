@@ -16,16 +16,16 @@ class EasyBot(Bot):
         while (True):
             command = self.receive(4096)
             # обновляем доску у бота, делая ход, переданный от игрока (костыль)
-            self.board.board[command["pos_before"][0]][command["pos_before"][1]].move(
-                command["pos_after"][0], command["pos_after"][1], self.board.board
-            )
-
+            self.board.move(**command)
             self.board.update_valid_moves()
             possible_player_moves = self.get_possible_player_moves()
             move = self.take_piece(possible_player_moves)
             move = self.take_care(possible_player_moves) if not move else move
             move = self.make_random_move() if not move else move
-            self.board.board[move[0][0]][move[0][1]].move(move[1][0], move[1][1], self.board.board)
+            self.board.move(self.name, move[0], move[1])
+
+            for i in self.board.moves_history:
+                print(i)
 
             print('Bot ' + "moved!", f'{move[0]} -> {move[1]}', '\n')
             self.board.update_valid_moves()
@@ -112,7 +112,6 @@ class EasyBot(Bot):
                                 or (row, col) not in players_piece.valid_moves
                                 or players_piece.get_value() >= value
                                 or best_value >= value):
-                            print("Continued")
                             continue
                         for move in piece.valid_moves:
                             if move not in players_piece.valid_moves:
