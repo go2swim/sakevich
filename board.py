@@ -393,8 +393,6 @@ class Board:
 
         pygame.display.update()
 
-
-
     def print_board(self):
         piece_unicode = {
             "king": {"w": "♔", "b": "♚"},
