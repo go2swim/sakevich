@@ -11,13 +11,17 @@ from tkinter import messagebox
 from client import Client
 from piece import get_piece
 from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK, \
-    RED, TIME_TO_MOVE
+    RED, TIME_TO_MOVE, BACKGROUND
+
+
+def background_loading(window: pygame.Surface) -> None:
+    bg_image = pygame.image.load(os.path.join("assets", "images", BACKGROUND))
+    bg_image = pygame.transform.scale(bg_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    window.blit(bg_image, (0, 0))
 
 
 def draw_start_menu(window: pygame.Surface, name: str, connection_lost: bool=False, connection_refused: bool=False) -> None:
-    #делаем фон окошка чёрным
-    window.fill(BLACK)  # TODO: load bg image
-
+    background_loading(window)
     #устанавливаем шрифт и создаём текст
     font = pygame.font.SysFont(FONT, SCREEN_HEIGHT//10)
     text1 = font.render("Press space key", True, WHITE)
@@ -54,7 +58,7 @@ def draw_start_menu(window: pygame.Surface, name: str, connection_lost: bool=Fal
     pygame.display.update()
 
 def draw_waiting(window: pygame.Surface, remaining_time: float, mode: bool) -> None:
-    window.fill(BLACK)
+    background_loading(window)
 
     if mode:
         alarm_img = pygame.transform.scale(
@@ -107,7 +111,7 @@ def draw_waiting(window: pygame.Surface, remaining_time: float, mode: bool) -> N
 
 key_event_queue = queue.Queue()
 
-def create_client(name: str, server_addr: tuple[str, int], window: pygame.Surface, key_event_queue: queue.Queue):
+def create_client(name: str, server_addr: tuple[str, int], window: pygame.Surface, key_event_queue: queue.Queue) -> None:
     try:
         new_client = Client(name, server_addr, window, key_event_queue)
         key_event_queue.put(new_client)  # Передаём созданного клиента в очередь
@@ -205,8 +209,7 @@ def handle_promotion_click(buttons, mouse_pos, promo_window_pos):
 
 #основной метод, тут происходит вся игра
 def chess_game(window: pygame.Surface, client: Client) -> None:
-    #отрисовываем задник
-    window.fill(BLACK)
+    background_loading(window)
     board = client.board
     board.draw(window, client.name)
     pygame.display.update()
@@ -248,7 +251,7 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
                     return
 
                 board.timers[name] = update_time
-                print(f'time:{board.timers[name]}')
+                #print(f'time:{board.timers[name]}')
 
                 with lock:
                     board.update_time_in_board(window)

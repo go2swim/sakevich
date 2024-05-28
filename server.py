@@ -153,7 +153,7 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
             if (isinstance(deserialized_command, str) and deserialized_command.startswith('TIME:')):
                 if client_names[communicating_client_num].startswith('Bot'):
                     continue
-                print(f'get time:{deserialized_command[5:]}')
+                #print(f'get time:{deserialized_command[5:]}')
                 board.timers[client_names[connection_sockets.index(client_socket)]] = int(deserialized_command[5:])
                 connection_sockets[communicating_client_num].send(command)
                 continue

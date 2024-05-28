@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import copy
 import os
 import pygame
 import tkinter as tk

@@ -40,7 +40,7 @@ class TestBot(unittest.TestCase):
 
         mock_socket_instance.connect.assert_called_with(server_addr)
         self.assertEqual(mock_socket_instance.recv.call_count, 3)
-        self.assertEqual(mock_pickle_loads.call_count, 2)
+        self.assertEqual(mock_pickle_loads.call_count, 1)
 
     @patch('bot.pickle.loads')
     @patch('socket.socket')

@@ -29,9 +29,8 @@ class TestChessGame(unittest.TestCase):
 
         mock_sys_font.assert_called_once_with(FONT, SCREEN_HEIGHT // 10)
         self.assertTrue(mock_display_update.called)
-        self.window.fill.assert_called_with(BLACK)
         self.window.blit.assert_called()
-        self.assertEqual(self.window.blit.call_count, 3)
+        self.assertEqual(self.window.blit.call_count, 4)
 
     @patch('pygame.display.update')
     @patch('pygame.font.SysFont')
@@ -39,13 +38,12 @@ class TestChessGame(unittest.TestCase):
         mock_font = MagicMock()
         mock_sys_font.return_value = mock_font
 
-        draw_waiting(self.window, 10)
+        draw_waiting(self.window, 10, False)
 
         mock_sys_font.assert_called_once_with(FONT, SCREEN_HEIGHT // 20)
         self.assertTrue(mock_display_update.called)
-        self.window.fill.assert_called_with(BLACK)
         self.window.blit.assert_called()
-        self.assertEqual(self.window.blit.call_count, 5)
+        self.assertEqual(self.window.blit.call_count, 6)
 
 
     @patch('client.Client.connect')
@@ -72,38 +70,38 @@ class TestChessGame(unittest.TestCase):
         self.assertFalse(key_event_queue.empty())
         assert isinstance(key_event_queue.get(), Client)
 
-    @patch('pygame.event.get', return_value=[])
-    @patch('queue.Queue.get', side_effect=["tup_space", MagicMock(spec=Client)])
-    @patch('window.draw_start_menu')
+    @patch('threading.Thread.is_alive', side_effect=RuntimeError("Test exception"))
+    @patch('window.create_client')
+    @patch('pygame.event.get')
+    @patch('pygame.quit')
     @patch('pygame.display.update')
-    @patch('threading.Thread')
-    @patch.object(Client, 'connect', return_value=None)  # Мокируем метод connect
-    def test_menu_screen(self, mock_connect, mock_thread, mock_display_update, mock_draw_menu, _, __):
-        # Mock the methods
-        mock_draw_menu.return_value = None
-        mock_display_update.return_value = None
-
-        mock_client_instance = MagicMock()
-        mock_thread.return_value = mock_client_instance
-        mock_thread.return_value.is_alive.side_effect = [True, False]
-
+    @patch('client.Client')
+    @patch('threading.Thread.start')
+    def test_menu_screen(self, mock_thread_start, MockClient, mock_pygame_display_update, mock_pygame_quit,
+                         mock_pygame_event_get, mock_create_client, mock_chess_game):
+        window = MagicMock()
+        name = "TestPlayer"
+        server_addr = ("localhost", 12345)
         key_event_queue = queue.Queue()
-        key_event_queue.put("tup_space")
-        key_event_queue.put(Client("Player1", ("localhost", 8080), self.window, key_event_queue))
 
-        def mock_chess_game(*args, **kwargs):
-            raise TestInterruptException
+        # Simulate pressing the space key to start client creation
+        mock_pygame_event_get.side_effect = [
+            [MagicMock(type=pygame.KEYDOWN, key=pygame.K_SPACE)],
+            []
+        ]
 
-        with patch('window.chess_game', side_effect=mock_chess_game):
-            with self.assertRaises(TestInterruptException):
-                menu_screen(self.window, "Player1")
+        def mock_create_client_fn(name, server_addr, window, key_event_queue):
+            key_event_queue.put(Client(name, server_addr, window, key_event_queue))
 
-        # Perform assertions
-        self.window.fill.assert_called_with(BLACK)
-        self.assertEqual(self.window.blit.call_count, 3)
-        self.assertTrue(mock_thread.called)
-        mock_display_update.assert_called_once()
-        mock_draw_menu.assert_called_once()
+        mock_create_client.side_effect = mock_create_client_fn
+
+        with self.assertRaises(RuntimeError):
+            menu_screen(window, name)
+
+        mock_chess_game.assert_called_once()
+        mock_pygame_event_get.assert_has_calls([call(), call()])
+        self.assertEqual(key_event_queue.qsize(), 0)
+
 
     @patch('pygame.mouse.get_pos')
     @patch('pygame.event.get')
@@ -131,7 +129,6 @@ class TestChessGame(unittest.TestCase):
             chess_game(self.window, self.client)
 
         # Проверка условий после вызова click
-        self.window.fill.assert_called_with(BLACK)
         self.assertTrue(mock_display_update.called)
         self.assertTrue(mock_thread.called)
         self.assertTrue(mock_board.draw.called)

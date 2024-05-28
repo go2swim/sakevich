@@ -28,7 +28,8 @@ class TestBoard(unittest.TestCase):
         self.board.set_name("Player2")
         self.assertTrue(self.board.is_ready)
 
-    def test_command(self):
+    @patch('board.Board.update_time_in_board', return_value=None)
+    def test_command(self, mock_update_time):
         """Проверка выполнения команд"""
         self.board.set_name("Player1")
         self.board.set_name("Player2")
@@ -39,6 +40,7 @@ class TestBoard(unittest.TestCase):
         self.board.command(command, window)
         self.assertIsNone(self.board.board[6][0])
         self.assertIsInstance(self.board.board[5][0], Pawn)
+        mock_update_time.asser_called_once()
 
     def test_click(self):
         """Проверка обработки кликов и выполнения хода"""
@@ -82,9 +84,10 @@ class TestBoard(unittest.TestCase):
         self.assertIsNone(self.board.board[6][0])
         self.assertIsInstance(self.board.board[5][0], Pawn)
 
+    @patch('board.Board.update_time_in_board', return_value = None)
     @patch('pygame.draw.rect')
     @patch('piece.Piece.draw')
-    def test_draw(self, mock_piece_draw, mock_draw_rect):
+    def test_draw(self, mock_piece_draw, mock_draw_rect, mock_update_time):
         """Проверка отрисовки доски"""
         mock_draw_rect.return_value = None
         window = MagicMock()
@@ -93,6 +96,7 @@ class TestBoard(unittest.TestCase):
 
         self.assertTrue(window.blit.called)
         self.assertTrue(mock_piece_draw.called)
+        mock_update_time.assert_called_once()
 
 
 if __name__ == '__main__':

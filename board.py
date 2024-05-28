@@ -6,9 +6,10 @@ import copy
 from typing import Any
 from copy import deepcopy
 from threading import Lock
+from window import background_loading
 
 from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE, BOARD_OFFSET, \
-    TILE_LENGTH, TIME_TO_MOVE, LEN_LOG
+    TILE_LENGTH, TIME_TO_MOVE, LEN_LOG, BACKGROUND
 from piece import King, Queen, Rook, Bishop, Knight, Pawn, Piece
 
 board_surface = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "chess_board.png")),
@@ -240,9 +241,7 @@ class Board:
         self.is_check = True in check
 
     def draw(self, window: pygame.Surface, p_name: str = None) -> None:
-        # чёрная заливка фона, теперь используем NEW_SCREEN_WIDTH
-        pygame.draw.rect(window, BLACK, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
-
+        background_loading(window)
         # размещаем саму картинку доски, указывая центр по середине экрана
         board_rect = board_surface.get_rect()
         board_rect.left = (SCREEN_WIDTH - BOARD_LENGTH) // BOARD_OFFSET
@@ -372,9 +371,13 @@ class Board:
         bp_time_rect = pygame.Rect(
             (board_rect.centerx + 80, board_rect.top - (SCREEN_HEIGHT - BOARD_LENGTH) // 4, 100, 30))
 
-        # Очистка старых таймеров
-        pygame.draw.rect(window, BLACK, wp_time_rect)
-        pygame.draw.rect(window, BLACK, bp_time_rect)
+        # Загрузка фонового изображения для областей таймеров
+        bg_image = pygame.image.load(os.path.join("assets", "images", BACKGROUND))
+        bg_image = pygame.transform.scale(bg_image, (100, 30))
+
+        # Очистка старых таймеров с использованием фонового изображения
+        window.blit(bg_image, wp_time_rect)
+        window.blit(bg_image, bp_time_rect)
 
         # Время для белого игрока
         wp_time = self.timers[self.wp_name]
