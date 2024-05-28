@@ -252,8 +252,8 @@ class Board:
         log_font = pygame.font.SysFont(FONT, SCREEN_WIDTH // 30)
 
         # создаём текст и красим его в зелёный в соответствии какой игрок ходит
-        text_bp = log_font.render(self.bp_name, True, GREEN if self.turn == self.bp_name else WHITE)
-        text_wp = log_font.render(self.wp_name, True, GREEN if self.turn == self.wp_name else WHITE)
+        text_bp = log_font.render(self.bp_name, True, 'chocolate1' if self.turn == self.bp_name else WHITE)
+        text_wp = log_font.render(self.wp_name, True, 'chocolate1' if self.turn == self.wp_name else WHITE)
 
         # координаты для текста
         text_bp_rect = text_bp.get_rect()
