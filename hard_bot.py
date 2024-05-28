@@ -42,6 +42,8 @@ def evaluate_position(board: Board) -> float:
 class HardBot(Bot):
     def __init__(self, name: str, server_addr: tuple[str, int]):
         super().__init__(name, server_addr)
+        self.current_best_move = None
+
 
     def play(self) -> None:
         print()
@@ -50,29 +52,30 @@ class HardBot(Bot):
         while (True):
             command = self.receive(4096)
             # обновляем доску у бота, делая ход, переданный от игрока (костыль)
-            self.board.board[command["pos_before"][0]][command["pos_before"][1]].move(
-                command["pos_after"][0], command["pos_after"][1], self.board.board
-            )
+            self.board.move(**command)
             self.board.update_valid_moves()
-            move = self.make_random_move()
+            print(self.board.moves_history)
+            self.board.print_board()
 
             t = time.time()
-            self.board.print_board()
             print("Evaluating...")
             print(self.minimax(self.board, DEPTH_FOR_HARD_BOT, -math.inf, math.inf, False))
             print(time.time() - t)
+            if not self.current_best_move:
+                self.current_best_move = self.make_random_move()
 
-            self.board.board[move[0][0]][move[0][1]].move(move[1][0], move[1][1], self.board.board)
-            print('Bot ' + "moved!", f'{move[0]} -> {move[1]}', '\n')
-            print(evaluate_position(self.board))
+            print(self.board.move(self.name, self.current_best_move[0], self.current_best_move[1]))
+
+            print('Bot ' + "moved!", f'{self.current_best_move[0]} -> {self.current_best_move[1]}', '\n')
             self.board.update_valid_moves()
             self.send({
                 "command": "move",
                 "p_name": self.name,
-                "pos_before": move[0],
-                "pos_after": move[1],
+                "pos_before": self.current_best_move[0],
+                "pos_after": self.current_best_move[1],
                 "replacement": None,
             })
+            self.current_best_move = None
 
     def minimax(self, position: Board, depth: int, alpha, beta, maximizing_player: bool):
         """Функция для получения наилучшей возможной оценки на данной позиции."""
@@ -114,7 +117,6 @@ class HardBot(Bot):
                 if piece:
                     if piece.color == 'b' and piece.valid_moves:
                         piece.is_selected = True
-                        # print(piece.valid_moves)
                         for move in piece.valid_moves:
                             print("Random move!")
                             return [(row, col), move]

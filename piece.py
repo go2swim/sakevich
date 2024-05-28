@@ -168,7 +168,6 @@ class Piece:
              replacement: str = None) -> bool:
         # координаты куда перемещаем фигуру
         if (row, col) not in self.valid_moves:
-            print("Чё")
             return False
 
         self.first_move = False
