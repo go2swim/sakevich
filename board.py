@@ -377,3 +377,6 @@ class Board:
         copy_board.is_check = self.is_check
         copy_board.turn_number = self.turn_number
         return copy_board
+
+    def __eq__(self, other):
+        return False # :(

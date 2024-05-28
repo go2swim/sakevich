@@ -3,6 +3,7 @@ import os
 import pygame
 import tkinter as tk
 from concurrent.futures.thread import ThreadPoolExecutor
+import copy
 
 from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
 from utils import coordinate_builder_to_absolute_coord

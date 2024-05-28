@@ -125,7 +125,7 @@ def client_thread(client_socket: socket.socket, board: Board, connection_number:
         except socket.timeout:
             continue
 
-    # если имя уже есть на сервере, то отключаем соеденение
+    # если имя уже есть на сервере, то отключаем соединение
     if client_names[connection_number] == client_names[communicating_client_num]:
         client_socket.close()
         print("[LOST] connection to a client")

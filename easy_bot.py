@@ -2,7 +2,7 @@ import copy
 import random
 
 from bot import Bot
-from sakevich.board import Board
+from board import Board
 
 
 class EasyBot(Bot):
