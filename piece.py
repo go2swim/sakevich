@@ -6,57 +6,66 @@ import pygame
 import tkinter as tk
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH
+from constants import BLACK, PIECE_GREEN_BG, TILE_LENGTH, BASE_DIR
 from utils import coordinate_builder_to_absolute_coord
 from client import Client
 
+
 selected_img = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "selected.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "selected.png")),
+    (TILE_LENGTH, TILE_LENGTH))
+
+selected_img = pygame.transform.scale(
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "selected.png")),
     (TILE_LENGTH, TILE_LENGTH))
 
 king_img_w = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "white_pieces", "white_king.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "white_pieces", "white_king.png")),
     (TILE_LENGTH, TILE_LENGTH))
 king_img_b = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "black_pieces", "black_king.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "black_pieces", "black_king.png")),
     (TILE_LENGTH, TILE_LENGTH))
 
 queen_img_w = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "white_pieces", "white_queen.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "white_pieces", "white_queen.png")),
     (TILE_LENGTH, TILE_LENGTH))
 queen_img_b = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "black_pieces", "black_queen.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "black_pieces", "black_queen.png")),
     (TILE_LENGTH, TILE_LENGTH))
 
 rook_img_w = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "white_pieces", "white_rook.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "white_pieces", "white_rook.png")),
     (TILE_LENGTH, TILE_LENGTH))
 rook_img_b = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "black_pieces", "black_rook.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "black_pieces", "black_rook.png")),
     (TILE_LENGTH, TILE_LENGTH))
 
 bishop_img_w = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "white_pieces", "white_bishop.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "white_pieces", "white_bishop.png")),
     (TILE_LENGTH, TILE_LENGTH))
 bishop_img_b = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "black_pieces", "black_bishop.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "black_pieces", "black_bishop.png")),
     (TILE_LENGTH, TILE_LENGTH))
 
 knight_img_w = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "white_pieces", "white_knight.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "white_pieces", "white_knight.png")),
     (TILE_LENGTH, TILE_LENGTH))
 knight_img_b = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "black_pieces", "black_knight.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "black_pieces", "black_knight.png")),
     (TILE_LENGTH, TILE_LENGTH))
 
 pawn_img_w = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "white_pieces", "white_pawn.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "white_pieces", "white_pawn.png")),
     (TILE_LENGTH, TILE_LENGTH))
 pawn_img_b = pygame.transform.scale(
-    pygame.image.load(os.path.join("assets", "images", "black_pieces", "black_pawn.png")),
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "black_pieces", "black_pawn.png")),
     (TILE_LENGTH, TILE_LENGTH))
 
-valid_move_dot = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "valid_move_dot.png")),
+valid_move_dot = pygame.transform.scale(
+    pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "valid_move_dot.png")),
+    (TILE_LENGTH, TILE_LENGTH))
+
+valid_move_dot = pygame.transform.scale(pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "valid_move_dot.png")),
                                         (TILE_LENGTH, TILE_LENGTH))
 
 images = {

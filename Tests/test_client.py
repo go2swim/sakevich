@@ -1,11 +1,12 @@
+import os
+import sys
 import unittest
 from unittest.mock import patch, MagicMock, call
 from queue import Queue
-import socket
 import pickle
 import pygame
 
-from board import Board
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from client import Client
 
 
@@ -68,6 +69,52 @@ class TestClient(unittest.TestCase):
 
         mock_socket_recv.assert_called_once_with(1024)
         self.assertEqual(result, {"key": "value"})
+
+    @patch('window.draw_waiting', return_value=None)
+    @patch('client.socket.socket')
+    @patch('client.pygame.Surface')
+    @patch('client.Queue')
+    def test_connect_time_condition(self, MockQueue, MockSurface, MockSocket, mock_draw_waiting):
+        # Mock socket and its methods
+        mock_socket = MockSocket.return_value
+        mock_socket.recv = MagicMock(side_effect=[
+            b"TIME:30.0\n",  # First recv call returns "TIME:" condition
+        ])
+
+        # Mock the key event queue
+        mock_queue = MockQueue.return_value
+        mock_queue.empty = MagicMock(return_value=False)
+        mock_queue.get = MagicMock(return_value="key_1")
+
+        with self.assertRaises(Exception) as context:
+            client = Client("test_user", ("localhost", 8080), MockSurface, mock_queue)
+
+        mock_socket.connect.assert_called_once_with(("localhost", 8080))
+        mock_draw_waiting.assert_called_once_with(MockSurface, 30.0, False)
+        mock_queue.empty.assert_called_once()
+        mock_queue.get.assert_called_once()
+
+    @patch('window.draw_waiting', return_value=None)
+    @patch('client.socket.socket')
+    @patch('client.pygame.Surface')
+    @patch('client.Queue')
+    def test_connect_get_condition(self, MockQueue, MockSurface, MockSocket, _):
+        # Mock socket and its methods
+        mock_socket = MockSocket.return_value
+        mock_socket.recv = MagicMock(side_effect=[
+            b"INFO:\nGET:need_name",  # First recv call returns "GET:" condition
+        ])
+
+        # Mock the key event queue
+        mock_queue = MockQueue.return_value
+        mock_queue.empty = MagicMock(return_value=True)
+
+
+        with self.assertRaises(Exception) as context:
+            client = Client("test_user", ("localhost", 8080), MockSurface, mock_queue)
+
+        mock_socket.connect.assert_called_once_with(("localhost", 8080))
+
 
 
 if __name__ == '__main__':

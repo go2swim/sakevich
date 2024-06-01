@@ -1,5 +1,8 @@
+import os
+import sys
 import unittest
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from constants import SCREEN_WIDTH, BOARD_LENGTH, BOARD_OFFSET, SCREEN_HEIGHT, TILE_LENGTH
 from utils import coordinate_builder_to_absolute_coord, coordinate_builder_to_tile_coord
 

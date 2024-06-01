@@ -1,9 +1,12 @@
+import os
+import sys
 import unittest
 import copy
 import random
 from unittest.mock import patch
 
-from bot import Bot
+
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from board import Board
 from easy_bot import EasyBot
 from piece import Piece, King, Queen, Rook, Bishop, Knight, Pawn

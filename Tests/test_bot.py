@@ -1,10 +1,12 @@
+import os
+import sys
 import unittest
 import pickle
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from unittest.mock import patch, MagicMock
 from board import Board
 from bot import Bot
-
 
 
 class TestBot(unittest.TestCase):

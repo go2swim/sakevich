@@ -11,11 +11,11 @@ from tkinter import messagebox
 from client import Client
 from piece import get_piece
 from constants import BOARD_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT, SERVER_ADDR, FONT, TILE_LENGTH, WHITE, CAPTION, BLACK, \
-    RED, TIME_TO_MOVE, BACKGROUND
+    RED, TIME_TO_MOVE, BACKGROUND, BASE_DIR
 
 
 def background_loading(window: pygame.Surface) -> None:
-    bg_image = pygame.image.load(os.path.join("assets", "images", BACKGROUND))
+    bg_image = pygame.image.load(os.path.join(BASE_DIR, "assets", "images", BACKGROUND))
     bg_image = pygame.transform.scale(bg_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
     window.blit(bg_image, (0, 0))
 
@@ -206,6 +206,42 @@ def handle_promotion_click(buttons, mouse_pos, promo_window_pos):
             return piece_name
     return None
 
+last_update_time = time.perf_counter()
+
+def update_timer_for_player(name: str, client, board, window, lock):
+    global last_update_time
+
+    current_time = time.perf_counter()
+    elapsed_time = current_time - last_update_time
+    if elapsed_time >= 1:
+        time_in_board = board.timers[name]
+        update_time = time_in_board - int(elapsed_time)
+        if update_time <= 0:
+            board.set_winner(client.name)
+            return
+
+        board.timers[name] = update_time
+        # print(f'time:{board.timers[name]}')
+
+        with lock:
+            board.update_time_in_board(window)
+
+        last_update_time = current_time
+
+        client.send(f'TIME:{board.timers[name]}')
+
+def update_timer(board, window, client, lock):
+    print(f'timer start working')
+    global last_update_time
+
+    while True:
+        if board.turn.startswith('Bot') or board.turn == client.name:
+            update_timer_for_player(board.turn, client, board, window, lock)
+        else:
+            # Сброс времени последнего обновления, чтобы время не уменьшалось, пока другой игрок ходит
+            last_update_time = time.perf_counter()
+
+        time.sleep(0.01)
 
 #основной метод, тут происходит вся игра
 def chess_game(window: pygame.Surface, client: Client) -> None:
@@ -234,45 +270,12 @@ def chess_game(window: pygame.Surface, client: Client) -> None:
     receive_thread.start()
     lock = threading.Lock()
 
-    def update_timer():
-        print(f'timer start working')
-
-        last_update_time = time.perf_counter()
-
-        def update_timer_for_player(name: str):
-            nonlocal last_update_time
-            current_time = time.perf_counter()
-            elapsed_time = current_time - last_update_time
-            if elapsed_time >= 1:
-                time_in_board = board.timers[name]
-                update_time = time_in_board - int(elapsed_time)
-                if update_time <= 0:
-                    board.update_winner = client.name
-                    return
-
-                board.timers[name] = update_time
-                #print(f'time:{board.timers[name]}')
-
-                with lock:
-                    board.update_time_in_board(window)
-
-                last_update_time = current_time
-
-                client.send(f'TIME:{board.timers[name]}')
-
-        while True:
-            if board.turn.startswith('Bot') or board.turn == client.name:
-                update_timer_for_player(board.turn)
-            else:
-                # Сброс времени последнего обновления, чтобы время не уменьшалось, пока другой игрок ходит
-                last_update_time = time.perf_counter()
-
-            time.sleep(0.01)
-
 
     if board.mode == 'blitz':
+        global last_update_time
+        last_update_time = time.perf_counter()
         board.timers[client.name] = TIME_TO_MOVE
-        timer_thread = threading.Thread(target=update_timer)
+        timer_thread = threading.Thread(target=update_timer, args=(board, window, client, lock))
         timer_thread.start()
 
     while True:

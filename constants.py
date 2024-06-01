@@ -1,8 +1,10 @@
+import os
+
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8743
 SERVER_ADDR = (SERVER_HOST, SERVER_PORT)
 WAIT_TIME = 30
-TIME_TO_MOVE = 60
+TIME_TO_MOVE = 180
 LEN_LOG = 32
 
 BOARD_OFFSET = 6
@@ -22,3 +24,5 @@ GREEN = (0, 255, 0)
 PIECE_GREEN_BG = (0, 128, 128)
 
 DEPTH_FOR_HARD_BOT = 2
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))

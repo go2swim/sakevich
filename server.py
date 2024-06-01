@@ -13,7 +13,7 @@ from board import Board
 
 # создаём сервер с протоколом TCP
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(SERVER_ADDR)  # присваиваем ему адресс
+server_socket.bind(SERVER_ADDR)  # присваиваем ему адрес
 server_socket.listen()  # и прослушиваем его
 
 # храним все запущеные сессии

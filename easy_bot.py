@@ -51,7 +51,7 @@ class EasyBot(Bot):
                         piece.is_selected = True
                         # print(piece.valid_moves)
                         for move in piece.valid_moves:
-                            print("Random move!")
+                            #print("Random move!")
                             return [(row, col), move]
 
     def take_piece(self, possible_player_moves: list) -> list[tuple[int, int], tuple[int, int]] or None:
@@ -81,8 +81,8 @@ class EasyBot(Bot):
                         best_move = [(row, col), move]
                         best_value = players_piece_value
                         continue
-        if best_move:
-            print("Piece taken!")
+        # if best_move:
+        #     print("Piece taken!")
         return best_move
 
     def test_one_move_ahead(self, board: Board, pos_before: tuple[int, int], pos_after: tuple[int, int]) -> Board:
@@ -112,7 +112,7 @@ class EasyBot(Bot):
                                 or (row, col) not in players_piece.valid_moves
                                 or players_piece.get_value() >= value
                                 or best_value >= value):
-                            print("Continued")
+                            #print("Continued")
                             continue
                         for move in piece.valid_moves:
                             if move not in players_piece.valid_moves:

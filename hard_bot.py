@@ -57,9 +57,9 @@ class HardBot(Bot):
             self.board.print_board()
 
             t = time.time()
-            print("Evaluating...")
+            #print("Evaluating...")
             self.minimax(self.board, DEPTH_FOR_HARD_BOT, -math.inf, math.inf, False)
-            print(time.time() - t)
+            #print(time.time() - t)
             if not self.current_best_move:
                 self.current_best_move = self.make_random_move()
 
@@ -120,5 +120,5 @@ class HardBot(Bot):
                     if piece.color == 'b' and piece.valid_moves:
                         piece.is_selected = True
                         for move in piece.valid_moves:
-                            print("Random move!")
+                            #print("Random move!")
                             return [(row, col), move]

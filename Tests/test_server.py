@@ -1,9 +1,9 @@
+import os
+import sys
 import unittest
 from unittest.mock import patch, MagicMock, call
-import threading
-import socket
-import pickle
-import time
+
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from server import create_bot, send_remaining_time, client_thread, connection_sockets, client_names, boards, connection_count, lock, SERVER_ADDR
 
 class TestServerFunctions(unittest.TestCase):

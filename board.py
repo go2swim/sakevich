@@ -9,10 +9,10 @@ from threading import Lock
 from window import background_loading
 
 from constants import BLACK, BOARD_LENGTH, FONT, GREEN, RED, SCREEN_HEIGHT, SCREEN_WIDTH, WHITE, BOARD_OFFSET, \
-    TILE_LENGTH, TIME_TO_MOVE, LEN_LOG, BACKGROUND
+    TILE_LENGTH, TIME_TO_MOVE, LEN_LOG, BACKGROUND, BASE_DIR
 from piece import King, Queen, Rook, Bishop, Knight, Pawn, Piece
 
-board_surface = pygame.transform.scale(pygame.image.load(os.path.join("assets", "images", "chess_board.png")),
+board_surface = pygame.transform.scale(pygame.image.load(os.path.join(BASE_DIR, "assets", "images", "chess_board.png")),
                                        (BOARD_LENGTH, BOARD_LENGTH))
 
 CONST1 = 1.5
@@ -348,8 +348,9 @@ class Board:
         if self.turn == self.wp_name:
             self.turn_number += 1
 
-        with lock:
-            self.update_time_in_board(window)
+        if self.mode == 'blitz':
+            with lock:
+                self.update_time_in_board(window)
 
     def update_time_in_board(self, window: pygame.Surface):
         def format_time(seconds):

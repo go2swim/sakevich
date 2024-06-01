@@ -1,6 +1,10 @@
+import os
+import sys
 import unittest
 import pygame
 from unittest.mock import patch, MagicMock
+
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from board import Board, Pawn, King, Piece
 
 
@@ -91,6 +95,7 @@ class TestBoard(unittest.TestCase):
         """Проверка отрисовки доски"""
         mock_draw_rect.return_value = None
         window = MagicMock()
+        self.board.set_mode('blitz')
 
         self.board.draw(window, "Player1")
 

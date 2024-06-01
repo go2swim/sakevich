@@ -1,6 +1,9 @@
 import os
+import sys
 import unittest
 from unittest.mock import MagicMock, patch, call
+
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from piece import Piece, King, Queen, Rook, Bishop, Knight, Pawn, create_piece, get_piece
 
 
